@@ -32,6 +32,7 @@ model:
     detector_min_std: 0.000001
   variants:
     - {id: identity, name: ocg, graph_mode: identity}
+    - {id: dense, name: ocg, graph_mode: dense}
     - {id: learned, name: ocg, graph_mode: learned}
     - {id: random, name: ocg, graph_mode: random}
     - {id: oracle, name: ocg, graph_mode: oracle}

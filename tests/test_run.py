@@ -127,6 +127,17 @@ def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
     }.issubset({path.stem for path in config_paths})
     for path in config_paths:
         assert isinstance(yaml.safe_load(path.read_text(encoding="utf-8")), dict)
+    d20_config = yaml.safe_load(
+        (repository / "configs" / "sanity_d20.yaml").read_text(encoding="utf-8")
+    )
+    assert d20_config["data"]["n_variables"] == 20
+    assert d20_config["data"]["sparsity"] == 0.1
+    assert d20_config["data"]["n_steps"] == d20_config["data"]["switch_at"] == 6000
+    assert d20_config["training"]["mode"] == "offline"
+    assert d20_config["training"]["epochs"] == 40
+    assert {
+        variant["graph_mode"] for variant in d20_config["model"]["variants"]
+    } == {"identity", "dense", "random", "oracle", "learned"}
 
     config_path = tmp_path / "cli.yaml"
     config = _synthetic_config()
