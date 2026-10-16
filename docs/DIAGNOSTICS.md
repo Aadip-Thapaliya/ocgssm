@@ -34,3 +34,19 @@ variables' two lags jointly.
 | 5 | 0.020984 | 0.020811 | 0.019971 |
 | 6 | 0.020983 | 0.021034 | 0.020748 |
 | Mean across horizons | 0.020985 | 0.020414 | 0.017155 |
+
+## Sanity run after Step 4 graph-aware lag readout
+
+The same `configs/sanity.yaml` run, with graph-masked learnable lag input
+mixing and a direct graph-masked lag forecast head, produced:
+
+| Variant | Overall MSE | Graph SHD | Graph AUROC |
+|---|---:|---:|---:|
+| identity | 0.019708 | unavailable | unavailable |
+| learned | 0.016494 | 15 | 0.500000 |
+| random | 0.016913 | unavailable | unavailable |
+| oracle | 0.017144 | 0 | 1.000000 |
+
+Oracle is 13.0% lower than identity, passing the required 10% sanity margin.
+The same model and config were used; comparison to the pre-Step-4 run is
+identity 0.019827 -> 0.019708 and oracle 0.019198 -> 0.017144.

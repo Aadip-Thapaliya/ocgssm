@@ -72,6 +72,50 @@ def test_tiny_overfit_and_learned_graph_gradient() -> None:
     assert gradient.abs().sum().item() > 0
 
 
+def test_lagged_input_mixing_respects_oracle_edge_and_lag() -> None:
+    """Lag mixer applies only graph-permitted source values from the matching lag."""
+    graph = torch.zeros(2, 2, 2)
+    graph[0, 0, 1] = 1.0
+    model = CausalSSM(
+        n_variables=2,
+        state_dim=3,
+        horizon=1,
+        n_lags=2,
+        graph_mode="oracle",
+        oracle_graph=graph,
+    )
+    with torch.no_grad():
+        model.lag_input_weights.fill_(1.0)
+    values = torch.tensor([[[2.0, 3.0], [5.0, 7.0], [11.0, 13.0]]])
+
+    mixed = model._mix_lagged_inputs(values)
+
+    expected = torch.tensor([[[2.0, 3.0], [8.0, 7.0], [18.0, 13.0]]])
+    torch.testing.assert_close(mixed, expected)
+
+
+def test_lagged_forecast_head_respects_oracle_edge_and_lag() -> None:
+    """Direct horizon readout uses the matching graph mask and recent lag values."""
+    graph = torch.zeros(2, 2, 2)
+    graph[0, 0, 1] = 1.0
+    model = CausalSSM(
+        n_variables=2,
+        state_dim=3,
+        horizon=2,
+        n_lags=2,
+        graph_mode="oracle",
+        oracle_graph=graph,
+    )
+    with torch.no_grad():
+        model.lag_forecast_weights.fill_(1.0)
+    values = torch.tensor([[[2.0, 3.0], [5.0, 7.0], [11.0, 13.0]]])
+
+    direct_forecast = model._direct_lag_forecast(values)
+
+    expected = torch.tensor([[[13.0, 0.0], [13.0, 0.0]]])
+    torch.testing.assert_close(direct_forecast, expected)
+
+
 def test_scan_runtime_scales_with_sequence_length() -> None:
     """Four times the sequence length remains within a linear-time tolerance."""
     torch.set_num_threads(1)
