@@ -23,17 +23,26 @@ class CausalSSM(nn.Module):
         graph_learner: GraphLearner | None = None,
         oracle_graph: Tensor | None = None,
         random_seed: int = 0,
+        random_sparsity: float | None = None,
     ) -> None:
         """Initialize the SSM stack, graph mode, and per-variable forecast head."""
         super().__init__()
         if n_variables < 1 or state_dim < 1 or horizon < 1 or n_lags < 1 or n_layers < 1:
             raise ValueError("model dimensions must be positive")
-        if graph_mode not in {"identity", "learned", "oracle", "random"}:
-            raise ValueError("graph_mode must be identity, learned, oracle, or random")
+        if graph_mode not in {"identity", "learned", "oracle", "random", "dense"}:
+            raise ValueError(
+                "graph_mode must be identity, learned, oracle, random, or dense"
+            )
         if graph_mode != "learned" and graph_learner is not None:
             raise ValueError("graph_learner can only be passed in learned mode")
         if graph_mode == "oracle" and oracle_graph is None:
             raise ValueError("oracle_graph is required in oracle mode")
+        if graph_mode != "oracle" and oracle_graph is not None:
+            raise ValueError("oracle_graph can only be passed in oracle mode")
+        if graph_mode == "random" and random_sparsity is None:
+            raise ValueError("random_sparsity is required in random mode")
+        if random_sparsity is not None and not 0.0 <= random_sparsity <= 1.0:
+            raise ValueError("random_sparsity must be in [0,1]")
         if graph_mode == "learned" and graph_learner is not None:
             if graph_learner.n_variables != n_variables or graph_learner.n_lags != n_lags:
                 raise ValueError("graph learner dimensions must match model dimensions")
@@ -54,8 +63,17 @@ class CausalSSM(nn.Module):
 
         if graph_mode == "random":
             generator = torch.Generator().manual_seed(random_seed)
-            fixed_graph = torch.rand(n_lags, n_variables, n_variables, generator=generator)
-        elif oracle_graph is not None:
+            edges_per_lag = round(float(random_sparsity) * n_variables**2)
+            fixed_graph = torch.zeros(n_lags, n_variables, n_variables)
+            for lag_index in range(n_lags):
+                edge_indices = torch.randperm(n_variables**2, generator=generator)[
+                    :edges_per_lag
+                ]
+                fixed_graph[lag_index].view(-1)[edge_indices] = 1.0
+        elif graph_mode == "dense":
+            fixed_graph = torch.ones(n_lags, n_variables, n_variables)
+            fixed_graph.diagonal(dim1=-2, dim2=-1).zero_()
+        elif graph_mode == "oracle" and oracle_graph is not None:
             fixed_graph = oracle_graph.detach().clone().float()
         else:
             fixed_graph = torch.zeros(n_lags, n_variables, n_variables)

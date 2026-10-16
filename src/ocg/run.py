@@ -104,8 +104,9 @@ def _build_model(
     n_lags: int,
     true_graph: Tensor | None,
     seed: int,
+    random_sparsity: float | None = None,
 ) -> nn.Module:
-    """Construct a configured baseline or OCG model for (B,L,D) windows."""
+    """Construct a baseline or OCG model for (B,L,D), using random density p."""
     name = config.get("name")
     if name == "dlinear":
         return DLinear(
@@ -168,6 +169,7 @@ def _build_model(
             graph_learner=graph_learner,
             oracle_graph=oracle_graph,
             random_seed=seed,
+            random_sparsity=random_sparsity,
         )
     raise ValueError(f"unsupported model name: {name!r}")
 
@@ -292,6 +294,11 @@ def run_experiment(
             n_lags,
             graph,
             variant_seed,
+            (
+                float(data_config["sparsity"])
+                if "sparsity" in data_config
+                else None
+            ),
         ).to(selected_device)
         if selected_device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(selected_device)

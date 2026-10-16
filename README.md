@@ -30,7 +30,9 @@ python -m ocg.run --config configs/ablation.yaml
 python -m ocg.run --config configs/stress.yaml
 ```
 
-The ablation config compares identity, learned, random, and oracle graph modes.
+The ablation configs compare identity, dense, learned, density-matched random,
+and oracle graph modes. Dense uses all off-diagonal edges; random samples the
+same configured expected edge count per lag as the synthetic generator.
 Results include forecast errors, graph scores when synthetic ground truth is
 available, online adaptation metrics, efficiency measurements, and regret
 against the oracle variant when one is configured. Results are written as JSON
