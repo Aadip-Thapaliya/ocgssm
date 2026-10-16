@@ -292,7 +292,11 @@ def run_experiment(
             int(series.shape[1]),
             horizon,
             n_lags,
-            graph,
+            (
+                graph
+                if variant.get("graph_mode") == "oracle"
+                else None
+            ),
             variant_seed,
             (
                 float(data_config["sparsity"])
