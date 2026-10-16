@@ -1,7 +1,7 @@
 # PLAN (Copilot: tick boxes only after acceptance tests pass)
 - [x] M0 skeleton, requirements.txt, pyproject, CI-free pytest config
 - [x] M1 data.py: SVAR generator (abrupt+gradual), real loaders (ETT, Electricity, Traffic via CSV path), windowing, RevIN
-- [ ] M2 graph.py: lagged logits, structural score, online update, EMA, regime detector
+- [x] M2 graph.py: lagged logits, structural score, online update, EMA, regime detector
 - [ ] M3 ssm.py + model.py: CausalSSMLayer, stack, head, graph modes
 - [ ] M4 baselines.py: DLinear, RevIN-Linear, Transformer-lite, NoGraph-SSM
 - [ ] M5 train.py: offline + online prequential loops, logging to results/*.json
@@ -12,5 +12,6 @@
 ## Decisions
 - Synthetic generation returns a dictionary of torch tensors (`series`, `graph`, `coefficients`); during a gradual switch the graph and coefficients interpolate linearly.
 - RevIN uses population standard deviation over each window's time dimension.
+- Graph sparsity regularization is the mean edge probability, and detector alerts temporarily boost the online graph optimizer's learning rate.
 ## Blockers
 (none yet)
