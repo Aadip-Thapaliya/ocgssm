@@ -138,6 +138,12 @@ def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
     assert {
         variant["graph_mode"] for variant in d20_config["model"]["variants"]
     } == {"identity", "dense", "random", "oracle", "learned"}
+    ablation_config = yaml.safe_load(
+        (repository / "configs" / "ablation.yaml").read_text(encoding="utf-8")
+    )
+    assert {
+        variant["graph_mode"] for variant in ablation_config["model"]["variants"]
+    } == {"identity", "dense", "random", "oracle", "learned"}
 
     config_path = tmp_path / "cli.yaml"
     config = _synthetic_config()

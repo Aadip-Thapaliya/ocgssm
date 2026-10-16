@@ -34,6 +34,9 @@ model:
     - id: identity
       name: ocg
       graph_mode: identity
+    - id: dense
+      name: ocg
+      graph_mode: dense
     - id: learned
       name: ocg
       graph_mode: learned
