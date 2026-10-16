@@ -1,0 +1,42 @@
+seed: 17
+data:
+  type: synthetic
+  n_steps: 4000
+  n_variables: 5
+  n_lags: 2
+  switch_at: 4000
+  blend_steps: 0
+  sparsity: 0.2
+  noise_scale: 0.1
+  input_length: 24
+  horizon: 6
+  train_fraction: 0.5
+  validation_fraction: 0.1
+  seed: 17
+model:
+  name: ocg
+  state_dim: 8
+  n_layers: 1
+  embedding_dim: 4
+  graph:
+    learning_rate: 0.01
+    sparsity_weight: 0.001
+    temperature: 1.0
+    ema_decay: 0.95
+    graph_stride: 1
+    boost: 3.0
+    boost_steps: 20
+    detector_decay: 0.95
+    detector_threshold: 3.5
+    detector_warmup: 30
+    detector_min_std: 0.000001
+  variants:
+    - {id: identity, name: ocg, graph_mode: identity}
+    - {id: learned, name: ocg, graph_mode: learned}
+    - {id: random, name: ocg, graph_mode: random}
+    - {id: oracle, name: ocg, graph_mode: oracle}
+training:
+  mode: offline
+  epochs: 40
+  batch_size: 32
+  learning_rate: 0.003
