@@ -121,6 +121,8 @@ def train_online(
 
     predictions: list[Tensor] = []
     squared_errors: list[float] = []
+    graph_history: list[Tensor] = []
+    detections: list[bool] = []
     for index in range(inputs.shape[0]):
         model.train()
         window = inputs[index : index + 1]
@@ -134,6 +136,8 @@ def train_online(
         optimizer.step()
         if graph_learner is not None:
             graph_learner.online_update(window)
+            graph_history.append(graph_learner.adjacency().detach().cpu().clone())
+            detections.append(graph_learner.last_detection)
 
     stacked_predictions = torch.cat(predictions, dim=0)
     results: dict[str, Any] = {
@@ -146,5 +150,8 @@ def train_online(
         ],
         "predictions": stacked_predictions.tolist(),
     }
+    if graph_learner is not None:
+        results["graph_history"] = torch.stack(graph_history).tolist()
+        results["detections"] = detections
     _write_results(output_path, results)
     return results

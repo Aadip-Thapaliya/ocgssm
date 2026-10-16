@@ -6,7 +6,7 @@
 - [x] M4 baselines.py: DLinear, RevIN-Linear, Transformer-lite, NoGraph-SSM
 - [x] M5 train.py: offline + online prequential loops, logging to results/*.json
 - [x] M6 eval.py: all metrics in SPEC
-- [ ] M7 run.py CLI + configs/*.yaml (synthetic_abrupt, synthetic_gradual, ett, electricity, traffic, ablation, stress)
+- [x] M7 run.py CLI + configs/*.yaml (synthetic_abrupt, synthetic_gradual, ett, electricity, traffic, ablation, stress)
 - [ ] M8 notebooks/colab_train.ipynb (clone, install, run config, save results to Drive) + README run commands
 - [ ] M9 stretch: graph ensemble + CRPS
 ## Decisions

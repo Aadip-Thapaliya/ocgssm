@@ -1,0 +1,20 @@
+seed: 41
+data:
+  type: csv
+  csv_path: data/traffic.csv
+  input_length: 96
+  horizon: 24
+  train_fraction: 0.7
+  validation_fraction: 0.1
+  n_lags: 1
+model:
+  name: ocg
+  graph_mode: learned
+  state_dim: 16
+  n_layers: 1
+  embedding_dim: 8
+training:
+  mode: offline
+  epochs: 10
+  batch_size: 32
+  learning_rate: 0.001

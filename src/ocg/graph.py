@@ -51,6 +51,7 @@ class GraphLearner(nn.Module):
         self.register_buffer("ema_logits", self.logits.detach().clone())
         self._optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         self._steps = 0
+        self.last_detection = False
 
     def adjacency(self, use_ema: bool = True) -> Tensor:
         """Return lagged edge probabilities (K,D,D) in the closed interval [0,1]."""
@@ -84,7 +85,8 @@ class GraphLearner(nn.Module):
         """Apply one online optimizer step to a batch of (B,L,D) windows."""
         self._steps += 1
         loss = self.structural_loss(values)
-        if self.detector.update(loss.detach()):
+        self.last_detection = self.detector.update(loss.detach())
+        if self.last_detection:
             self._boost_remaining = self.boost_steps
         if self._steps % self.graph_stride == 0:
             learning_rate = self._base_learning_rate

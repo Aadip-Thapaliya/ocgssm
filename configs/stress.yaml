@@ -1,0 +1,26 @@
+seed: 47
+data:
+  type: synthetic
+  n_steps: 400
+  n_variables: 8
+  n_lags: 3
+  switch_at: 280
+  blend_steps: 0
+  sparsity: 0.15
+  noise_scale: 0.1
+  input_length: 48
+  horizon: 12
+  train_fraction: 0.6
+  validation_fraction: 0.2
+  seed: 47
+model:
+  name: ocg
+  graph_mode: learned
+  state_dim: 12
+  n_layers: 2
+  embedding_dim: 8
+training:
+  mode: offline
+  epochs: 2
+  batch_size: 16
+  learning_rate: 0.001
