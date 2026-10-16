@@ -22,5 +22,6 @@
 - Gate reporting: results now store per-window MSE and `switch_at`, `test_start`, and `input_length`. The reporter uses the first test window's last input index to compute pre/post-switch spans, then takes the first 200 and last 400 post-switch windows. Missing spans or unavailable graph metrics print as `-`.
 - Graph reporting: identity and random variants explicitly report that graph metrics are unavailable because they have no trained logits; oracle scores use the time-matched graph. Learned-graph detection delay now uses the same last-input alignment as forecast graph selection, including a switch at the first test window.
 - Gate-report acceptance: focused summary checks cover both 200/400 window boundaries and pre/post split alignment; `pytest -q` passed all 31 tests (one pre-existing Transformer nested-tensor warning). No dependency was added.
+- Step 3 diagnostics: the exact `configs/sanity.yaml` run gave identity 0.019827 and oracle 0.019198 MSE (3.2% lower), triggering Step 4. The post-switch direct OLS table for horizons 1-6 is saved in `docs/DIAGNOSTICS.md`; full VAR mean MSE was 0.017155 versus 0.020414 per-variable AR and 0.020985 mean. The requested 4,000-step/40-epoch CPU run exceeded two minutes but completed within the ten-minute cap.
 ## Blockers
 (none yet)
