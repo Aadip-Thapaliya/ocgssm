@@ -24,7 +24,7 @@ from ocg.eval import (
 )
 from ocg.graph import GraphLearner, RegimeDetector
 from ocg.model import CausalSSM
-from ocg.train import train_offline, train_online
+from ocg.train import _regime_ids_from_graphs, _set_oracle_graph, train_offline, train_online
 
 
 def _mapping(value: Any, name: str) -> dict[str, Any]:
@@ -172,13 +172,21 @@ def _build_model(
     raise ValueError(f"unsupported model name: {name!r}")
 
 
-def _predict_timed(model: nn.Module, inputs: Tensor) -> tuple[Tensor, list[float]]:
+def _predict_timed(
+    model: nn.Module,
+    inputs: Tensor,
+    oracle_graphs: Tensor | None = None,
+) -> tuple[Tensor, list[float]]:
     """Predict each window individually and time each (1,L,D) inference step."""
+    if oracle_graphs is not None and oracle_graphs.shape[0] != inputs.shape[0]:
+        raise ValueError("oracle_graphs must align with the number of input windows")
     model.eval()
     predictions: list[Tensor] = []
     step_times: list[float] = []
     with torch.no_grad():
         for index in range(inputs.shape[0]):
+            if oracle_graphs is not None:
+                _set_oracle_graph(model, oracle_graphs[index])
             if inputs.device.type == "cuda":
                 torch.cuda.synchronize(inputs.device)
             started = time.perf_counter()
@@ -246,8 +254,25 @@ def run_experiment(
     test_targets = test_targets.to(selected_device)
     if graph is not None:
         graph = graph.to(selected_device)
+    train_end = int(series.shape[0] * float(data_config["train_fraction"]))
     test_graph = (
-        graph[test_start + input_length : test_start + input_length + test_inputs.shape[0]]
+        graph[
+            test_start + input_length - 1 :
+            test_start + input_length - 1 + test_inputs.shape[0]
+        ]
+        if graph is not None
+        else None
+    )
+    train_graphs = (
+        graph[input_length - 1 : input_length - 1 + train_inputs.shape[0]]
+        if graph is not None
+        else None
+    )
+    validation_graphs = (
+        graph[
+            train_end + input_length - 1 :
+            train_end + input_length - 1 + validation_inputs.shape[0]
+        ]
         if graph is not None
         else None
     )
@@ -271,6 +296,7 @@ def run_experiment(
         if selected_device.type == "cuda":
             torch.cuda.reset_peak_memory_stats(selected_device)
         if mode == "offline":
+            is_oracle = variant.get("graph_mode") == "oracle"
             training_result = train_offline(
                 model,
                 train_inputs,
@@ -281,8 +307,24 @@ def run_experiment(
                 seed=variant_seed,
                 validation_inputs=validation_inputs,
                 validation_targets=validation_targets,
+                oracle_graphs=train_graphs if is_oracle else None,
+                regime_ids=(
+                    _regime_ids_from_graphs(train_graphs)
+                    if is_oracle and train_graphs is not None
+                    else None
+                ),
+                validation_oracle_graphs=validation_graphs if is_oracle else None,
+                validation_regime_ids=(
+                    _regime_ids_from_graphs(validation_graphs)
+                    if is_oracle and validation_graphs is not None
+                    else None
+                ),
             )
-            predictions, step_times = _predict_timed(model, test_inputs)
+            predictions, step_times = _predict_timed(
+                model,
+                test_inputs,
+                test_graph if is_oracle else None,
+            )
         else:
             if selected_device.type == "cuda":
                 torch.cuda.synchronize(selected_device)
@@ -293,6 +335,9 @@ def run_experiment(
                 test_targets,
                 learning_rate=float(training_config["learning_rate"]),
                 seed=variant_seed,
+                oracle_graphs=(
+                    test_graph if variant.get("graph_mode") == "oracle" else None
+                ),
             )
             if selected_device.type == "cuda":
                 torch.cuda.synchronize(selected_device)
@@ -334,9 +379,15 @@ def run_experiment(
                     predicted_graph = torch.eye(model.n_variables).unsqueeze(0).expand(
                         model.n_lags, -1, -1
                     )
+                elif model.graph_mode == "oracle" and test_graph is not None:
+                    report["graph"] = graph_metrics(
+                        model.fixed_graph.detach(),
+                        test_graph[-1],
+                    )
                 else:
                     predicted_graph = model.fixed_graph.detach()
-                report["graph"] = graph_metrics(predicted_graph, truth_graph)
+                if model.graph_mode != "oracle":
+                    report["graph"] = graph_metrics(predicted_graph, truth_graph)
             if mode == "online" and learner is not None and test_graph is not None:
                 history_value = training_result.get("graph_history")
                 detection_value = training_result.get("detections")

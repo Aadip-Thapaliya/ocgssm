@@ -14,5 +14,10 @@
 - RevIN uses population standard deviation over each window's time dimension.
 - Graph sparsity regularization is the mean edge probability, and detector alerts temporarily boost the online graph optimizer's learning rate.
 - Identity adjacency contributes node-local embeddings but masks the diagonal from cross-variable coupling; learned forecasts use EMA values with a straight-through gradient to current logits.
+- Gate work: `tests/test_baselines.py` was already tracked, so the requested Step 0 staging/commit was unnecessary.
+- Oracle fix: graph schedules are aligned to each window's last input step (`start + input_length - 1`); the old test schedule was one step late. Offline training/evaluation now groups windows by consecutive graph changes, so no batch crosses a graph regime and each graph is installed for its group. Online prequential forecasts install the matching graph before prediction. This also handles each distinct graph during a gradual blend without changing the SSM forward signature.
+- Oracle graph metrics now compare the final evaluation graph with the true graph at the final evaluated window's last input time; a switching synthetic-run regression asserts zero SHD. Forecast-level schedule tests prove forecasts change with the supplied oracle graph.
+- Environment finding: `configs/gate.yaml` and `configs/sanity.yaml` were present but untracked before this work. The run-config test now checks the required benchmark configs as a subset, so task-specific configs do not invalidate it.
+- Oracle-fix acceptance: `pytest -q` passed all 28 tests (one pre-existing Transformer nested-tensor warning).
 ## Blockers
 (none yet)

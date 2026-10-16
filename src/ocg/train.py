@@ -35,6 +35,67 @@ def _write_results(path: str | Path | None, results: dict[str, Any]) -> None:
         result_file.write("\n")
 
 
+def _validate_oracle_schedule(
+    model: nn.Module,
+    inputs: Tensor,
+    oracle_graphs: Tensor | None,
+    regime_ids: Tensor | None,
+) -> None:
+    """Validate oracle graphs (N,K,D,D) and offline regimes (N,)."""
+    if (oracle_graphs is None) != (regime_ids is None):
+        raise ValueError("oracle_graphs and regime_ids must be provided together")
+    if oracle_graphs is None or regime_ids is None:
+        return
+    fixed_graph = getattr(model, "fixed_graph", None)
+    if getattr(model, "graph_mode", None) != "oracle" or not isinstance(fixed_graph, Tensor):
+        raise ValueError("oracle graph schedules require an oracle model with fixed_graph")
+    if (
+        oracle_graphs.ndim != 4
+        or oracle_graphs.shape[0] != inputs.shape[0]
+        or oracle_graphs.shape[1:] != fixed_graph.shape
+    ):
+        raise ValueError("oracle_graphs must have shape (N,K,D,D) aligned with inputs")
+    if regime_ids.shape != (inputs.shape[0],) or regime_ids.dtype not in {
+        torch.int8,
+        torch.int16,
+        torch.int32,
+        torch.int64,
+        torch.uint8,
+    }:
+        raise ValueError("regime_ids must be an integer tensor shaped (N,)")
+    if oracle_graphs.device != inputs.device or regime_ids.device != inputs.device:
+        raise ValueError("oracle schedules must be on the same device as inputs")
+    if (
+        not torch.isfinite(oracle_graphs).all()
+        or torch.any((oracle_graphs < 0) | (oracle_graphs > 1))
+    ):
+        raise ValueError("oracle graph probabilities must be finite and in [0,1]")
+
+
+def _set_oracle_graph(model: nn.Module, graph: Tensor) -> None:
+    """Set an oracle model's fixed adjacency from one (K,D,D) graph."""
+    fixed_graph = getattr(model, "fixed_graph", None)
+    if not isinstance(fixed_graph, Tensor) or fixed_graph.shape != graph.shape:
+        raise ValueError("oracle model fixed_graph must match graph shape (K,D,D)")
+    with torch.no_grad():
+        fixed_graph.copy_(graph.to(device=fixed_graph.device, dtype=fixed_graph.dtype))
+
+
+def _regime_ids_from_graphs(oracle_graphs: Tensor) -> Tensor:
+    """Label consecutive constant (K,D,D) graph regimes for (N,K,D,D) windows."""
+    if oracle_graphs.ndim != 4 or oracle_graphs.shape[0] < 1:
+        raise ValueError("oracle_graphs must have nonempty shape (N,K,D,D)")
+    changed = (oracle_graphs[1:] != oracle_graphs[:-1]).reshape(
+        oracle_graphs.shape[0] - 1, -1
+    ).any(dim=1)
+    return torch.cat(
+        (
+            torch.zeros(1, dtype=torch.long, device=oracle_graphs.device),
+            changed.to(dtype=torch.long).cumsum(dim=0),
+        )
+    )
+
+
 def train_offline(
     model: nn.Module,
     train_inputs: Tensor,
@@ -46,17 +107,28 @@ def train_offline(
     validation_inputs: Tensor | None = None,
     validation_targets: Tensor | None = None,
     output_path: str | Path | None = None,
+    oracle_graphs: Tensor | None = None,
+    regime_ids: Tensor | None = None,
+    validation_oracle_graphs: Tensor | None = None,
+    validation_regime_ids: Tensor | None = None,
 ) -> dict[str, Any]:
-    """Fit on training windows (N,L,D)/(N,H,D) and optionally log validation MSE."""
+    """Fit on (N,L,D)/(N,H,D) windows, isolating oracle batches by regime."""
     _validate_windows(train_inputs, train_targets)
     if epochs < 1 or batch_size < 1 or learning_rate <= 0:
         raise ValueError("epochs, batch_size, and learning_rate must be positive")
+    _validate_oracle_schedule(model, train_inputs, oracle_graphs, regime_ids)
     if (validation_inputs is None) != (validation_targets is None):
         raise ValueError("validation_inputs and validation_targets must be provided together")
     if validation_inputs is not None and validation_targets is not None:
         _validate_windows(validation_inputs, validation_targets)
         if validation_inputs.device != train_inputs.device:
             raise ValueError("training and validation tensors must be on the same device")
+        _validate_oracle_schedule(
+            model,
+            validation_inputs,
+            validation_oracle_graphs,
+            validation_regime_ids,
+        )
     torch.manual_seed(seed)
     parameters = list(model.parameters())
     if not parameters:
@@ -69,22 +141,50 @@ def train_offline(
         model.train()
         total_loss = 0.0
         n_examples = train_inputs.shape[0]
-        for start in range(0, n_examples, batch_size):
-            inputs = train_inputs[start : start + batch_size]
-            targets = train_targets[start : start + batch_size]
-            optimizer.zero_grad()
-            loss = nn.functional.mse_loss(model(inputs), targets)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.detach().item() * inputs.shape[0]
+        if oracle_graphs is not None and regime_ids is not None:
+            batch_groups = [
+                torch.nonzero(regime_ids == regime, as_tuple=False).flatten()
+                for regime in torch.unique(regime_ids, sorted=True)
+            ]
+        else:
+            batch_groups = [torch.arange(n_examples, device=train_inputs.device)]
+        for group_indices in batch_groups:
+            if oracle_graphs is not None:
+                _set_oracle_graph(model, oracle_graphs[group_indices[0]])
+            for start in range(0, group_indices.shape[0], batch_size):
+                indices = group_indices[start : start + batch_size]
+                inputs = train_inputs[indices]
+                targets = train_targets[indices]
+                optimizer.zero_grad()
+                loss = nn.functional.mse_loss(model(inputs), targets)
+                loss.backward()
+                optimizer.step()
+                total_loss += loss.detach().item() * inputs.shape[0]
         train_losses.append(total_loss / n_examples)
 
         if validation_inputs is not None and validation_targets is not None:
             model.eval()
             with torch.no_grad():
-                validation_loss = nn.functional.mse_loss(
-                    model(validation_inputs), validation_targets
-                )
+                if validation_oracle_graphs is not None and validation_regime_ids is not None:
+                    validation_total = 0.0
+                    for regime in torch.unique(validation_regime_ids, sorted=True):
+                        indices = torch.nonzero(
+                            validation_regime_ids == regime, as_tuple=False
+                        ).flatten()
+                        _set_oracle_graph(model, validation_oracle_graphs[indices[0]])
+                        loss = nn.functional.mse_loss(
+                            model(validation_inputs[indices]),
+                            validation_targets[indices],
+                        )
+                        validation_total += loss.item() * indices.shape[0]
+                    validation_loss = torch.tensor(
+                        validation_total / validation_inputs.shape[0],
+                        device=validation_inputs.device,
+                    )
+                else:
+                    validation_loss = nn.functional.mse_loss(
+                        model(validation_inputs), validation_targets
+                    )
             validation_losses.append(float(validation_loss.item()))
 
     results: dict[str, Any] = {
@@ -105,11 +205,19 @@ def train_online(
     learning_rate: float,
     seed: int = 0,
     output_path: str | Path | None = None,
+    oracle_graphs: Tensor | None = None,
 ) -> dict[str, Any]:
-    """Run prequential training on ordered windows (N,L,D)/(N,H,D)."""
+    """Run prequential training on (N,L,D)/(N,H,D) windows and optional oracle (N,K,D,D)."""
     _validate_windows(inputs, targets)
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive")
+    if oracle_graphs is not None:
+        _validate_oracle_schedule(
+            model,
+            inputs,
+            oracle_graphs,
+            torch.zeros(inputs.shape[0], dtype=torch.long, device=inputs.device),
+        )
     torch.manual_seed(seed)
     parameters = list(model.parameters())
     if not parameters:
@@ -127,6 +235,8 @@ def train_online(
         model.train()
         window = inputs[index : index + 1]
         target = targets[index : index + 1]
+        if oracle_graphs is not None:
+            _set_oracle_graph(model, oracle_graphs[index])
         optimizer.zero_grad()
         prediction = model(window)
         predictions.append(prediction.detach().cpu().clone())

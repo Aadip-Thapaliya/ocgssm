@@ -75,6 +75,7 @@ def test_run_experiment_variants_and_oracle_regret(tmp_path: Path) -> None:
     assert set(result["variants"]) == {"identity", "oracle"}
     assert result["variants"]["identity"]["forecast"]["mse"] >= 0
     assert "graph" in result["variants"]["oracle"]
+    assert result["variants"]["oracle"]["graph"]["shd"] == 0
     assert isinstance(result["variants"]["identity"]["regret_vs_oracle"], float)
     assert json.loads(output_path.read_text(encoding="utf-8")) == result
 
@@ -105,7 +106,7 @@ def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
     """CLI runs a config and all seven benchmark files parse as YAML."""
     repository = Path(__file__).resolve().parents[1]
     config_paths = sorted((repository / "configs").glob("*.yaml"))
-    assert {path.stem for path in config_paths} == {
+    assert {
         "synthetic_abrupt",
         "synthetic_gradual",
         "ett",
@@ -113,7 +114,7 @@ def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
         "traffic",
         "ablation",
         "stress",
-    }
+    }.issubset({path.stem for path in config_paths})
     for path in config_paths:
         assert isinstance(yaml.safe_load(path.read_text(encoding="utf-8")), dict)
 
