@@ -22,6 +22,7 @@ from ocg.eval import (
     regret_vs_oracle,
     recovery_time,
 )
+from ocg.graph import GraphLearner, RegimeDetector
 from ocg.model import CausalSSM
 from ocg.train import train_offline, train_online
 
@@ -135,6 +136,27 @@ def _build_model(
     if name == "ocg":
         graph_mode = str(config["graph_mode"])
         oracle_graph = true_graph[0] if graph_mode == "oracle" and true_graph is not None else None
+        graph_config = _mapping(config.get("graph", {}), "model.graph")
+        graph_learner = None
+        if graph_mode == "learned":
+            detector = RegimeDetector(
+                decay=float(graph_config["detector_decay"]),
+                threshold=float(graph_config["detector_threshold"]),
+                warmup=int(graph_config["detector_warmup"]),
+                min_std=float(graph_config["detector_min_std"]),
+            )
+            graph_learner = GraphLearner(
+                n_variables=n_variables,
+                n_lags=n_lags,
+                learning_rate=float(graph_config["learning_rate"]),
+                sparsity_weight=float(graph_config["sparsity_weight"]),
+                temperature=float(graph_config["temperature"]),
+                ema_decay=float(graph_config["ema_decay"]),
+                graph_stride=int(graph_config["graph_stride"]),
+                detector=detector,
+                boost=float(graph_config["boost"]),
+                boost_steps=int(graph_config["boost_steps"]),
+            )
         return CausalSSM(
             n_variables=n_variables,
             state_dim=int(config["state_dim"]),
@@ -143,6 +165,7 @@ def _build_model(
             n_layers=int(config["n_layers"]),
             embedding_dim=int(config["embedding_dim"]),
             graph_mode=graph_mode,
+            graph_learner=graph_learner,
             oracle_graph=oracle_graph,
             random_seed=seed,
         )
@@ -156,8 +179,12 @@ def _predict_timed(model: nn.Module, inputs: Tensor) -> tuple[Tensor, list[float
     step_times: list[float] = []
     with torch.no_grad():
         for index in range(inputs.shape[0]):
+            if inputs.device.type == "cuda":
+                torch.cuda.synchronize(inputs.device)
             started = time.perf_counter()
             predictions.append(model(inputs[index : index + 1]).detach())
+            if inputs.device.type == "cuda":
+                torch.cuda.synchronize(inputs.device)
             step_times.append(time.perf_counter() - started)
     return torch.cat(predictions, dim=0), step_times
 
@@ -186,14 +213,18 @@ def run_experiment(
     config_path: str | Path,
     output_path: str | Path | None = None,
     data_path: str | Path | None = None,
+    device: str | None = None,
 ) -> dict[str, Any]:
-    """Run configured variants and return forecast, graph, adaptation, and efficiency metrics."""
+    """Run configured variants on a device and return their evaluation metrics."""
     config = _load_config(config_path)
     seed = int(config["seed"])
     data_config = _mapping(config["data"], "data")
     model_config = _mapping(config["model"], "model")
     training_config = _mapping(config["training"], "training")
     series, graph, switch_at = _load_series(data_config, data_path)
+    selected_device = torch.device(device or config.get("device", "cpu"))
+    if selected_device.type == "cuda" and not torch.cuda.is_available():
+        raise ValueError("CUDA was requested but is not available")
     input_length = int(data_config["input_length"])
     horizon = int(data_config["horizon"])
     n_lags = int(data_config.get("n_lags", 1))
@@ -207,6 +238,14 @@ def run_experiment(
     train_inputs, train_targets = train
     validation_inputs, validation_targets = validation
     test_inputs, test_targets = test
+    train_inputs = train_inputs.to(selected_device)
+    train_targets = train_targets.to(selected_device)
+    validation_inputs = validation_inputs.to(selected_device)
+    validation_targets = validation_targets.to(selected_device)
+    test_inputs = test_inputs.to(selected_device)
+    test_targets = test_targets.to(selected_device)
+    if graph is not None:
+        graph = graph.to(selected_device)
     test_graph = (
         graph[test_start + input_length : test_start + input_length + test_inputs.shape[0]]
         if graph is not None
@@ -228,7 +267,9 @@ def run_experiment(
             n_lags,
             graph,
             variant_seed,
-        )
+        ).to(selected_device)
+        if selected_device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats(selected_device)
         if mode == "offline":
             training_result = train_offline(
                 model,
@@ -243,6 +284,8 @@ def run_experiment(
             )
             predictions, step_times = _predict_timed(model, test_inputs)
         else:
+            if selected_device.type == "cuda":
+                torch.cuda.synchronize(selected_device)
             started = time.perf_counter()
             training_result = train_online(
                 model,
@@ -251,8 +294,14 @@ def run_experiment(
                 learning_rate=float(training_config["learning_rate"]),
                 seed=variant_seed,
             )
+            if selected_device.type == "cuda":
+                torch.cuda.synchronize(selected_device)
             elapsed = time.perf_counter() - started
-            predictions = torch.tensor(training_result["predictions"], dtype=test_targets.dtype)
+            predictions = torch.tensor(
+                training_result["predictions"],
+                dtype=test_targets.dtype,
+                device=selected_device,
+            )
             step_times = [elapsed / test_inputs.shape[0]] * test_inputs.shape[0]
         predictions_by_variant[variant_id] = predictions
 
@@ -266,7 +315,11 @@ def run_experiment(
             },
             "efficiency": efficiency_metrics(
                 step_times,
-                resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+                (
+                    torch.cuda.max_memory_allocated(selected_device)
+                    if selected_device.type == "cuda"
+                    else resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024
+                ),
                 model,
             ),
         }
@@ -327,6 +380,7 @@ def run_experiment(
     result: dict[str, Any] = {
         "config": str(config_path),
         "seed": seed,
+        "device": str(selected_device),
         "variants": reports,
     }
     destination = Path(output_path) if output_path is not None else Path("results") / f"{Path(config_path).stem}.json"
@@ -343,8 +397,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--config", required=True, help="Path to an experiment YAML config")
     parser.add_argument("--output", help="JSON output path (default: results/<config>.json)")
     parser.add_argument("--data-path", help="Override the CSV path configured for real datasets")
+    parser.add_argument("--device", help="Torch device, such as cpu or cuda")
     arguments = parser.parse_args(argv)
-    result = run_experiment(arguments.config, arguments.output, arguments.data_path)
+    result = run_experiment(
+        arguments.config, arguments.output, arguments.data_path, arguments.device
+    )
     print(json.dumps({"seed": result["seed"], "variants": list(result["variants"])}))
     return 0
 

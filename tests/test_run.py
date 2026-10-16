@@ -9,6 +9,23 @@ import yaml
 from ocg.run import main, run_experiment
 
 
+def _graph_config() -> dict[str, int | float]:
+    """Return explicit graph-learning and regime-detector hyperparameters."""
+    return {
+        "learning_rate": 0.01,
+        "sparsity_weight": 0.001,
+        "temperature": 1.0,
+        "ema_decay": 0.95,
+        "graph_stride": 1,
+        "boost": 3.0,
+        "boost_steps": 20,
+        "detector_decay": 0.95,
+        "detector_threshold": 3.5,
+        "detector_warmup": 30,
+        "detector_min_std": 0.000001,
+    }
+
+
 def _synthetic_config(mode: str = "offline") -> dict[str, Any]:
     """Return a compact experiment config suitable for CPU smoke tests."""
     return {
@@ -33,6 +50,7 @@ def _synthetic_config(mode: str = "offline") -> dict[str, Any]:
             "state_dim": 4,
             "n_layers": 1,
             "embedding_dim": 2,
+            "graph": _graph_config(),
             "variants": [
                 {"id": "identity", "name": "ocg", "graph_mode": "identity"},
                 {"id": "oracle", "name": "ocg", "graph_mode": "oracle"},
@@ -70,6 +88,7 @@ def test_online_run_reports_graph_adaptation(tmp_path: Path) -> None:
         "state_dim": 4,
         "n_layers": 1,
         "embedding_dim": 2,
+        "graph": _graph_config(),
     }
     config_path = tmp_path / "online.yaml"
     config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
@@ -106,6 +125,57 @@ def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
     }
     config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
     output_path = tmp_path / "cli.json"
-    assert main(["--config", str(config_path), "--output", str(output_path)]) == 0
+    assert main(
+        ["--config", str(config_path), "--output", str(output_path), "--device", "cpu"]
+    ) == 0
     assert '"variants": ["revin_linear"]' in capsys.readouterr().out
     assert output_path.exists()
+
+
+def test_colab_notebook_is_valid_and_runs_to_drive() -> None:
+    """The Colab notebook includes cloning, installation, execution, and Drive output."""
+    repository = Path(__file__).resolve().parents[1]
+    notebook = json.loads((repository / "notebooks" / "colab_train.ipynb").read_text())
+    assert notebook["nbformat"] == 4
+    source = "\n".join(
+        line
+        for cell in notebook["cells"]
+        for line in cell["source"]
+    )
+    assert "git clone" in source
+    assert "pip install -e ." in source
+    assert "configs/synthetic_abrupt.yaml" in source
+    assert "/content/drive/MyDrive/ocgssm/results/" in source
+
+
+def test_real_csv_path_override(tmp_path: Path) -> None:
+    """The runner loads a user-provided CSV in place of the configured path."""
+    csv_path = tmp_path / "series.csv"
+    csv_path.write_text(
+        "first,second\n" + "".join(f"{index},{index % 7}\n" for index in range(100)),
+        encoding="utf-8",
+    )
+    config = {
+        "seed": 5,
+        "data": {
+            "type": "csv",
+            "csv_path": "not-present.csv",
+            "input_length": 4,
+            "horizon": 1,
+            "train_fraction": 0.5,
+            "validation_fraction": 0.2,
+            "n_lags": 1,
+        },
+        "model": {"name": "revin_linear", "input_length": 4},
+        "training": {
+            "mode": "offline",
+            "epochs": 1,
+            "batch_size": 8,
+            "learning_rate": 0.001,
+        },
+    }
+    config_path = tmp_path / "csv.yaml"
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    result = run_experiment(config_path, tmp_path / "csv.json", data_path=csv_path)
+    assert result["variants"]["revin_linear"]["forecast"]["mse"] >= 0

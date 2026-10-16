@@ -4,7 +4,7 @@ data:
   n_steps: 480
   n_variables: 5
   n_lags: 2
-  switch_at: 320
+  switch_at: 480
   blend_steps: 0
   sparsity: 0.2
   noise_scale: 0.1
@@ -18,6 +18,18 @@ model:
   state_dim: 8
   n_layers: 1
   embedding_dim: 4
+  graph:
+    learning_rate: 0.01
+    sparsity_weight: 0.001
+    temperature: 1.0
+    ema_decay: 0.95
+    graph_stride: 1
+    boost: 3.0
+    boost_steps: 20
+    detector_decay: 0.95
+    detector_threshold: 3.5
+    detector_warmup: 30
+    detector_min_std: 0.000001
   variants:
     - id: identity
       name: ocg
