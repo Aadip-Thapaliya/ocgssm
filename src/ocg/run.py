@@ -368,6 +368,9 @@ def run_experiment(
                 model,
             ),
         }
+        report["forecast"]["per_window_mse"] = (
+            (predictions - test_targets).square().mean(dim=(1, 2)).detach().cpu().tolist()
+        )
 
         learner = getattr(model, "graph_learner", None)
         if graph is not None:
@@ -376,18 +379,20 @@ def run_experiment(
                 report["graph"] = graph_metrics(learner.adjacency().detach(), truth_graph)
             elif isinstance(model, CausalSSM):
                 if model.graph_mode == "identity":
-                    predicted_graph = torch.eye(model.n_variables).unsqueeze(0).expand(
-                        model.n_lags, -1, -1
-                    )
+                    report["graph"] = {
+                        "available": False,
+                        "reason": "identity mode has no trained graph logits",
+                    }
+                elif model.graph_mode == "random":
+                    report["graph"] = {
+                        "available": False,
+                        "reason": "random mode has no trained graph logits",
+                    }
                 elif model.graph_mode == "oracle" and test_graph is not None:
                     report["graph"] = graph_metrics(
                         model.fixed_graph.detach(),
                         test_graph[-1],
                     )
-                else:
-                    predicted_graph = model.fixed_graph.detach()
-                if model.graph_mode != "oracle":
-                    report["graph"] = graph_metrics(predicted_graph, truth_graph)
             if mode == "online" and learner is not None and test_graph is not None:
                 history_value = training_result.get("graph_history")
                 detection_value = training_result.get("detections")
@@ -402,12 +407,17 @@ def run_experiment(
                         for index in range(history.shape[0])
                     ]
                     if switch_at is not None:
-                        switch_index = switch_at - (test_start + input_length)
-                        if 0 < switch_index < len(step_shd):
+                        switch_index = switch_at - (test_start + input_length - 1)
+                        if 0 <= switch_index < len(step_shd):
                             report["adaptation"] = {
-                                "recovery_time": recovery_time(step_shd, switch_index),
-                                "detection_delay": detection_delay(detection_value, switch_index),
+                                "detection_delay": detection_delay(
+                                    detection_value, switch_index
+                                )
                             }
+                            if switch_index > 0:
+                                report["adaptation"]["recovery_time"] = recovery_time(
+                                    step_shd, switch_index
+                                )
                     report["graph"]["online_final_shd"] = int(
                         graph_metrics(history[-1], test_graph[-1])["shd"]
                     )
@@ -432,6 +442,12 @@ def run_experiment(
         "config": str(config_path),
         "seed": seed,
         "device": str(selected_device),
+        "evaluation": {
+            "switch_at": switch_at,
+            "test_start": test_start,
+            "input_length": input_length,
+            "test_window_count": int(test_inputs.shape[0]),
+        },
         "variants": reports,
     }
     destination = Path(output_path) if output_path is not None else Path("results") / f"{Path(config_path).stem}.json"

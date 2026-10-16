@@ -53,6 +53,7 @@ def _synthetic_config(mode: str = "offline") -> dict[str, Any]:
             "graph": _graph_config(),
             "variants": [
                 {"id": "identity", "name": "ocg", "graph_mode": "identity"},
+                {"id": "random", "name": "ocg", "graph_mode": "random"},
                 {"id": "oracle", "name": "ocg", "graph_mode": "oracle"},
             ],
         },
@@ -72,8 +73,17 @@ def test_run_experiment_variants_and_oracle_regret(tmp_path: Path) -> None:
     config_path.write_text(yaml.safe_dump(_synthetic_config()), encoding="utf-8")
 
     result = run_experiment(config_path, output_path)
-    assert set(result["variants"]) == {"identity", "oracle"}
+    assert set(result["variants"]) == {"identity", "random", "oracle"}
+    assert result["evaluation"] == {
+        "switch_at": 56,
+        "test_start": 48,
+        "input_length": 4,
+        "test_window_count": 44,
+    }
     assert result["variants"]["identity"]["forecast"]["mse"] >= 0
+    assert len(result["variants"]["identity"]["forecast"]["per_window_mse"]) == 44
+    assert result["variants"]["identity"]["graph"]["available"] is False
+    assert result["variants"]["random"]["graph"]["available"] is False
     assert "graph" in result["variants"]["oracle"]
     assert result["variants"]["oracle"]["graph"]["shd"] == 0
     assert isinstance(result["variants"]["identity"]["regret_vs_oracle"], float)

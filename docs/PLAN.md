@@ -19,5 +19,8 @@
 - Oracle graph metrics now compare the final evaluation graph with the true graph at the final evaluated window's last input time; a switching synthetic-run regression asserts zero SHD. Forecast-level schedule tests prove forecasts change with the supplied oracle graph.
 - Environment finding: `configs/gate.yaml` and `configs/sanity.yaml` were present but untracked before this work. The run-config test now checks the required benchmark configs as a subset, so task-specific configs do not invalidate it.
 - Oracle-fix acceptance: `pytest -q` passed all 28 tests (one pre-existing Transformer nested-tensor warning).
+- Gate reporting: results now store per-window MSE and `switch_at`, `test_start`, and `input_length`. The reporter uses the first test window's last input index to compute pre/post-switch spans, then takes the first 200 and last 400 post-switch windows. Missing spans or unavailable graph metrics print as `-`.
+- Graph reporting: identity and random variants explicitly report that graph metrics are unavailable because they have no trained logits; oracle scores use the time-matched graph. Learned-graph detection delay now uses the same last-input alignment as forecast graph selection, including a switch at the first test window.
+- Gate-report acceptance: focused summary checks cover both 200/400 window boundaries and pre/post split alignment; `pytest -q` passed all 31 tests (one pre-existing Transformer nested-tensor warning). No dependency was added.
 ## Blockers
 (none yet)
