@@ -24,7 +24,13 @@ from ocg.eval import (
 )
 from ocg.graph import GraphLearner, RegimeDetector
 from ocg.model import CausalSSM
-from ocg.train import _regime_ids_from_graphs, _set_oracle_graph, train_offline, train_online
+from ocg.train import (
+    _regime_ids_from_graphs,
+    _set_oracle_graph,
+    train_offline,
+    train_online,
+    warm_start_graph,
+)
 
 
 def _mapping(value: Any, name: str) -> dict[str, Any]:
@@ -308,6 +314,21 @@ def run_experiment(
             torch.cuda.reset_peak_memory_stats(selected_device)
         if mode == "offline":
             is_oracle = variant.get("graph_mode") == "oracle"
+            is_learned = variant.get("graph_mode") == "learned"
+            warm_start_result: dict[str, Any] | None = None
+            if is_learned:
+                graph_config = _mapping(variant.get("graph", {}), "model.graph")
+                warm_start_epochs = int(graph_config.get("warm_start_epochs", 5))
+                warm_start_batch_size = int(
+                    graph_config.get("warm_start_batch_size", training_config["batch_size"])
+                )
+                warm_start_result = warm_start_graph(
+                    model,
+                    train_inputs,
+                    epochs=warm_start_epochs,
+                    batch_size=warm_start_batch_size,
+                    seed=variant_seed,
+                )
             training_result = train_offline(
                 model,
                 train_inputs,
@@ -331,6 +352,8 @@ def run_experiment(
                     else None
                 ),
             )
+            if warm_start_result is not None:
+                training_result.update(warm_start_result)
             predictions, step_times = _predict_timed(
                 model,
                 test_inputs,

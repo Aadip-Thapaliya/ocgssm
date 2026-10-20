@@ -112,6 +112,26 @@ def test_online_run_reports_graph_adaptation(tmp_path: Path) -> None:
     assert "detection_delay" in report["adaptation"]
 
 
+def test_offline_learned_run_reports_graph_warm_start(tmp_path: Path) -> None:
+    """Offline learned runs report structural warm-start loss and logit drift."""
+    config = _synthetic_config("offline")
+    config["model"] = {
+        "name": "ocg",
+        "graph_mode": "learned",
+        "state_dim": 4,
+        "n_layers": 1,
+        "embedding_dim": 2,
+        "graph": _graph_config(),
+    }
+    config_path = tmp_path / "offline_learned.yaml"
+    config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+
+    result = run_experiment(config_path, tmp_path / "offline_learned.json")
+    training = result["variants"]["ocg"]["training"]
+    assert len(training["warm_start_structural_loss"]) == 5
+    assert training["warm_start_logit_delta_l1"] > 0
+
+
 def test_cli_and_all_benchmark_configs(tmp_path: Path, capsys: Any) -> None:
     """CLI runs a config and all seven benchmark files parse as YAML."""
     repository = Path(__file__).resolve().parents[1]

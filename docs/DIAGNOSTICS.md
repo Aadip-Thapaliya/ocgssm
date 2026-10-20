@@ -15,6 +15,25 @@ Benchmarked on CPU with `python scripts/bench_speed.py` using `L=24`, batch size
 | 20 | Backward ms/batch | 25.291 | 27.394 | 0.92x |
 | 20 | Online ms/step | 16.720 | 8.294 | 2.02x |
 
+## Quality
+
+### Step a: offline learned-graph warm-start (reduced h=6 ablations)
+
+Using [quality_d5_h6.yaml](/workspaces/ocgssm/configs/quality_d5_h6.yaml) and
+[quality_d20_h6.yaml](/workspaces/ocgssm/configs/quality_d20_h6.yaml), seeds
+17/18/19, with warm-start epochs toggled from 0 to 5:
+
+| D | Warm-start epochs | Learned validation MSE (mean ± std) | Learned test MSE (mean ± std) | Learned AUROC (mean ± std) |
+|---:|---:|---:|---:|---:|
+| 5 | 0 | 3.2440 ± 4.5458 | 3.7547 ± 5.2648 | 0.5000 ± 0.0000 |
+| 5 | 5 | 0.2594 ± 0.3227 | 0.2544 ± 0.3118 | 0.6194 ± 0.0235 |
+| 20 | 0 | 8.60e21 ± 1.22e22 | 8.77e21 ± 1.24e22 | 0.5000 ± 0.0000 |
+| 20 | 5 | 6.34e20 ± 8.97e20 | 6.61e20 ± 9.35e20 | 0.5208 ± 0.0398 |
+
+Warm-start updates logits (`warm_start_logit_delta_l1 > 0`) and improves
+learned graph AUROC/validation loss, but learned still trails identity on this
+reduced setup, so additional stabilization/tuning is still required.
+
 ## Sanity run before Step 4 model changes
 
 Configuration: `configs/sanity.yaml` (seed 17, 4,000 steps, `switch_at = 4,000`,

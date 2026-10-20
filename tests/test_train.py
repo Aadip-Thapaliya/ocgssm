@@ -6,7 +6,9 @@ from pathlib import Path
 import torch
 from torch import Tensor, nn
 
+from ocg.model import CausalSSM
 from ocg.train import train_offline, train_online
+from ocg.train import warm_start_graph
 
 
 class _ScalarForecaster(nn.Module):
@@ -139,3 +141,25 @@ def test_offline_oracle_batches_are_isolated_by_regime() -> None:
     assert len(model.seen_graphs) == 2
     assert torch.equal(model.seen_graphs[0], torch.zeros(1, 2, 2))
     assert torch.equal(model.seen_graphs[1], torch.ones(1, 2, 2))
+
+
+def test_warm_start_graph_updates_learned_logits() -> None:
+    """Structural warm-start changes learned graph logits on training windows."""
+    model = CausalSSM(
+        n_variables=3,
+        state_dim=4,
+        horizon=1,
+        n_lags=2,
+        graph_mode="learned",
+    )
+    inputs = torch.randn(32, 8, 3)
+    result = warm_start_graph(
+        model,
+        inputs,
+        epochs=2,
+        batch_size=8,
+        seed=17,
+    )
+    assert "warm_start_structural_loss" in result
+    assert len(result["warm_start_structural_loss"]) == 2
+    assert result["warm_start_logit_delta_l1"] > 0

@@ -96,6 +96,55 @@ def _regime_ids_from_graphs(oracle_graphs: Tensor) -> Tensor:
     )
 
 
+def warm_start_graph(
+    model: nn.Module,
+    inputs: Tensor,
+    epochs: int,
+    batch_size: int,
+    seed: int = 0,
+) -> dict[str, Any]:
+    """Warm-start learned graph logits on (N,L,D) windows via structural loss only."""
+    _validate_windows(inputs, inputs[:, :1, :])
+    if epochs < 0 or batch_size < 1:
+        raise ValueError("epochs must be nonnegative and batch_size positive")
+    graph_learner = getattr(model, "graph_learner", None)
+    if not isinstance(graph_learner, GraphLearner):
+        raise ValueError("warm_start_graph requires a model with GraphLearner")
+    torch.manual_seed(seed)
+    initial_logits = graph_learner.logits.detach().clone()
+    n_examples = inputs.shape[0]
+    losses: list[float] = []
+    if epochs == 0:
+        return {
+            "warm_start_structural_loss": losses,
+            "warm_start_logit_delta_l1": 0.0,
+        }
+    for _ in range(epochs):
+        permutation = torch.randperm(n_examples, device=inputs.device)
+        total_loss = 0.0
+        for start in range(0, n_examples, batch_size):
+            indices = permutation[start : start + batch_size]
+            batch = inputs[indices]
+            graph_learner._optimizer.zero_grad(set_to_none=True)
+            loss = graph_learner.structural_loss(batch)
+            loss.backward()
+            graph_learner._optimizer.step()
+            with torch.no_grad():
+                graph_learner.ema_logits.mul_(graph_learner.ema_decay).add_(
+                    graph_learner.logits, alpha=1.0 - graph_learner.ema_decay
+                )
+            total_loss += loss.detach().item() * batch.shape[0]
+        losses.append(total_loss / n_examples)
+    with torch.no_grad():
+        logit_delta_l1 = torch.mean(
+            torch.abs(graph_learner.logits - initial_logits)
+        ).item()
+    return {
+        "warm_start_structural_loss": losses,
+        "warm_start_logit_delta_l1": float(logit_delta_l1),
+    }
+
+
 def train_offline(
     model: nn.Module,
     train_inputs: Tensor,
