@@ -6,7 +6,14 @@ from torch.nn import functional as functional
 
 
 class CausalSSMLayer(nn.Module):
-    """Scan values shaped (B,L,D) and produce hidden states shaped (B,L,D,N)."""
+    """Scan values shaped (B,L,D) and produce hidden states shaped (B,L,D,N).
+
+    The recurrence is ``S' = decay * S + (1 - decay) * gate * (A_cross @ S @ W^T) + input``
+    with row-normalized ``A_cross`` (rows sum to at most one) and ``W`` rescaled so its
+    maximum absolute row sum is at most ``coupling_norm_bound``. With a bound of one,
+    every row of the one-step state transition sums to at most one in absolute value,
+    so its spectral radius is at most one regardless of D or graph density.
+    """
 
     def __init__(
         self,
@@ -14,6 +21,7 @@ class CausalSSMLayer(nn.Module):
         state_dim: int,
         embedding_dim: int,
         coupling_init_scale: float = 1.0,
+        coupling_norm_bound: float = 1.0,
     ) -> None:
         """Create variable embeddings and state-space projections."""
         super().__init__()
@@ -21,8 +29,11 @@ class CausalSSMLayer(nn.Module):
             raise ValueError("n_variables, state_dim, and embedding_dim must be positive")
         if coupling_init_scale <= 0:
             raise ValueError("coupling_init_scale must be positive")
+        if coupling_norm_bound <= 0:
+            raise ValueError("coupling_norm_bound must be positive")
         self.n_variables = n_variables
         self.state_dim = state_dim
+        self.coupling_norm_bound = coupling_norm_bound
         self.use_reference_forward = False
         self.node_embeddings = nn.Parameter(torch.randn(n_variables, embedding_dim) * 0.1)
         self.graph_encoder = nn.Sequential(
@@ -40,13 +51,29 @@ class CausalSSMLayer(nn.Module):
         self.logA = nn.Parameter(torch.zeros(state_dim))
 
     def _graph_features(self, adjacency: Tensor) -> tuple[Tensor, Tensor]:
-        """Return graph features (D,E) and cross-variable mask (D,D) from adjacency."""
+        """Return graph features (D,E) and row-normalized cross-variable coupling (D,D).
+
+        Each off-diagonal row is divided by ``max(1, row sum)`` so the coupling gain
+        cannot grow with the number of variables or the graph density.
+        """
         neighbors = adjacency @ self.node_embeddings
         graph_features = self.graph_encoder(torch.cat((self.node_embeddings, neighbors), dim=-1))
         cross_adjacency = adjacency * (
             1.0 - torch.eye(self.n_variables, device=adjacency.device, dtype=adjacency.dtype)
         )
-        return graph_features, cross_adjacency
+        row_sums = cross_adjacency.sum(dim=-1, keepdim=True).clamp(min=1.0)
+        return graph_features, cross_adjacency / row_sums
+
+    def _effective_coupling_weight(self) -> Tensor:
+        """Return the (N,N) coupling weight rescaled so max |row| sum <= coupling_norm_bound."""
+        weight = self.coupling_projection.weight
+        max_row_sum = weight.abs().sum(dim=-1).max()
+        scale = torch.clamp(self.coupling_norm_bound / max_row_sum.clamp(min=1e-12), max=1.0)
+        return weight * scale
+
+    def _coupling(self, state: Tensor, cross_adjacency: Tensor, weight: Tensor) -> Tensor:
+        """Mix neighbor states: (B,D,N) state with (D,D) adjacency and (N,N) weight."""
+        return torch.matmul(cross_adjacency, torch.matmul(state, weight.transpose(0, 1)))
 
     def _fast_scan(
         self,
@@ -65,12 +92,13 @@ class CausalSSMLayer(nn.Module):
             if return_hidden_sequence
             else None
         )
+        weight = self._effective_coupling_weight()
+        coupling_gate = (1.0 - decay) * gate
         for time_index in range(sequence_length):
-            transformed_state = self.coupling_projection(state)
-            coupling = torch.matmul(cross_adjacency, transformed_state)
+            coupling = self._coupling(state, cross_adjacency, weight)
             state = (
                 decay[:, time_index] * state
-                + gate[:, time_index] * coupling
+                + coupling_gate[:, time_index] * coupling
                 + input_state[:, time_index]
             )
             if hidden is not None:
@@ -118,17 +146,17 @@ class CausalSSMLayer(nn.Module):
         projected_values: list[Tensor] = []
         decay_rate = torch.exp(self.logA).view(1, 1, self.state_dim)
         node_features = graph_features.unsqueeze(0).expand(values.shape[0], -1, -1)
+        weight = self._effective_coupling_weight()
 
         for time_index in range(values.shape[1]):
             current = values[:, time_index, :].unsqueeze(-1)
             features = torch.cat((current, node_features), dim=-1)
             dt = functional.softplus(self.dt_projection(features))
             decay = torch.exp(-dt * decay_rate)
-            transformed_state = self.coupling_projection(state)
-            coupling = torch.matmul(cross_adjacency, transformed_state)
+            coupling = self._coupling(state, cross_adjacency, weight)
             gate = torch.sigmoid(self.gate_projection(features))
             input_state = self.input_projection(features) * current
-            state = decay * state + gate * coupling + dt * input_state
+            state = decay * state + (1.0 - decay) * gate * coupling + dt * input_state
             output = torch.sum(self.output_projection(features) * state, dim=-1)
             hidden_states.append(state)
             projected_values.append(output)

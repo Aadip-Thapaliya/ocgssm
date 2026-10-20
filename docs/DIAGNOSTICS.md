@@ -159,3 +159,43 @@ realized radius stayed below one, which is why the same code trained there.
 The lag input mixer and lag forecast readout row sums stay below 0.45 for both
 variants and are not implicated; `logA`/decay is not implicated either
 (identity decay drifts only 0.49 -> 0.62).
+
+### After fix (a): row-normalized coupling, bounded coupling weight, decay-complementary gate
+
+Changes in `CausalSSMLayer`: (1) each off-diagonal row of `cross_adjacency`
+is divided by `max(1, row sum)`; (2) the coupling weight used in the scan is
+`W * min(1, coupling_norm_bound / max_i sum_j |W_ij|)` (default bound 1.0,
+`model.coupling_norm_bound`); (3) the coupling term is multiplied by
+`(1 - decay)` so every row of the one-step transition has absolute row sum
+`<= decay + (1 - decay) * gate <= 1`, i.e. spectral radius `<= 1` for any D
+and any graph density. Same shrunk D=20 diagnostic
+(`results/diagnose_stability_d20_after_a.json`):
+
+| Variant | Epoch | Train loss | Spectral radius (max) | Hidden max | Max grad norm (coupling / gate / input / logA) |
+|---|---:|---:|---:|---:|---|
+| identity | 0 (init) | - | 0.424 | 0.31 | - |
+| identity | 10 | 0.0237 | 0.661 | 0.30 | 0 / 0 / 2.5e-3 / 4.2e-4 |
+| oracle | 0 (init) | - | **0.517** | **0.47** | - |
+| oracle | 1 | 0.0509 | 0.535 | 0.29 | 6.7e-4 / 4.8e-5 / 6.3e-3 / 6.4e-4 |
+| oracle | 10 | **0.0206** | 0.832 | 0.34 | 1.6e-3 / 3.4e-4 / 2.5e-3 / 5.3e-4 |
+
+Full shrunk run, all five variants, seed 17 (`configs/stability_d20.yaml`,
+`configs/stability_d5.yaml`; before numbers are the reported baseline):
+
+| D | Variant | Test MSE before | Test MSE after | Val MSE after |
+|---:|---|---:|---:|---:|
+| 20 | identity | 0.024 | 0.02397 | 0.02646 |
+| 20 | dense | inf | 0.01812 | 0.01952 |
+| 20 | random | 0.42 | 0.02310 | 0.02547 |
+| 20 | oracle | 2834 | 0.02099 | 0.02305 |
+| 20 | learned | 9.9e10 | 0.01816 | 0.01968 |
+| 5 | identity | - | 0.01917 | 0.01607 |
+| 5 | dense | - | 0.01658 | 0.01428 |
+| 5 | random | - | 0.01867 | 0.01579 |
+| 5 | oracle | - | 0.01703 | 0.01448 |
+| 5 | learned | - | 0.01710 | 0.01467 |
+
+No variant diverges, oracle beats identity on validation and test at both D,
+and identity is unchanged within noise (0.024 -> 0.02397). The lag mixer /
+readout row sums and `logA` were not implicated, so candidates (b) and (d)
+were not applied.

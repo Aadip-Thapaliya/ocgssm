@@ -245,6 +245,7 @@ def _build_model(
             random_sparsity=random_sparsity,
             scan_implementation=str(config.get("scan_implementation", "fast")),
             coupling_init_scale=float(config.get("coupling_init_scale", 1.0)),
+            coupling_norm_bound=float(config.get("coupling_norm_bound", 1.0)),
         )
     raise ValueError(f"unsupported model name: {name!r}")
 

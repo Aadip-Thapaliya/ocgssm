@@ -62,12 +62,13 @@ def _brute_force_transition(model: CausalSSM, values: torch.Tensor, time_index: 
     decay = torch.exp(-dt * torch.exp(layer.logA).view(1, 1, -1))
     gate = torch.sigmoid(layer.gate_projection(features))
     n_variables, state_dim = layer.n_variables, layer.state_dim
+    weight = layer._effective_coupling_weight()
     columns = []
     for basis_index in range(n_variables * state_dim):
         state = torch.zeros(1, n_variables, state_dim)
         state.view(-1)[basis_index] = 1.0
-        coupling = cross_adjacency @ layer.coupling_projection(state)
-        next_state = decay * state + gate * coupling
+        coupling = layer._coupling(state, cross_adjacency, weight)
+        next_state = decay * state + (1.0 - decay) * gate * coupling
         columns.append(next_state.reshape(-1))
     return torch.stack(columns, dim=1)
 

@@ -26,6 +26,7 @@ class CausalSSM(nn.Module):
         random_sparsity: float | None = None,
         scan_implementation: str = "fast",
         coupling_init_scale: float = 1.0,
+        coupling_norm_bound: float = 1.0,
     ) -> None:
         """Initialize the SSM stack, graph mode, and per-variable forecast head."""
         super().__init__()
@@ -49,6 +50,8 @@ class CausalSSM(nn.Module):
             raise ValueError("scan_implementation must be fast or reference")
         if coupling_init_scale <= 0:
             raise ValueError("coupling_init_scale must be positive")
+        if coupling_norm_bound <= 0:
+            raise ValueError("coupling_norm_bound must be positive")
         if graph_mode == "learned" and graph_learner is not None:
             if graph_learner.n_variables != n_variables or graph_learner.n_lags != n_lags:
                 raise ValueError("graph learner dimensions must match model dimensions")
@@ -92,6 +95,7 @@ class CausalSSM(nn.Module):
                 state_dim,
                 embedding_dim,
                 coupling_init_scale=coupling_init_scale,
+                coupling_norm_bound=coupling_norm_bound,
             )
             for _ in range(n_layers)
         )

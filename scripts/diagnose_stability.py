@@ -67,8 +67,9 @@ def effective_transition_matrices(
 ) -> Tensor:
     """Build one-step transitions (B,L,D*N,D*N) for state vec(S) with S shaped (D,N).
 
-    The recurrence is ``S' = decay * S + gate * (A_cross @ S @ W^T) + input``, so the
-    linear part in flattened ``(d,n)`` order is ``diag(vec(decay)) + (diag(gate) A_cross) ⊗ W``.
+    The recurrence is ``S' = decay * S + (1 - decay) * gate * (A_cross @ S @ W^T) + input``,
+    so the linear part in flattened ``(d,n)`` order is
+    ``diag(vec(decay)) + diag(vec((1 - decay) * gate)) (A_cross ⊗ W)``.
     """
     layer = model.layers[layer_index]
     adjacency = model._adjacency(values).to(dtype=values.dtype)
@@ -82,9 +83,14 @@ def effective_transition_matrices(
     decay = torch.exp(-dt * torch.exp(layer.logA).view(1, 1, 1, -1))
     gate = torch.sigmoid(layer.gate_projection(features))
     batch_size, sequence_length, n_variables, state_dim = decay.shape
-    weight = layer.coupling_projection.weight
-    gated_adjacency = gate * cross_adjacency.unsqueeze(0).unsqueeze(0)
-    coupling_part = torch.einsum("blij,mn->blimjn", gated_adjacency, weight).reshape(
+    weight = layer._effective_coupling_weight()
+    coupling_gate = (1.0 - decay) * gate
+    coupling_part = torch.einsum(
+        "blij,blim,mn->blimjn",
+        cross_adjacency.expand(batch_size, sequence_length, -1, -1),
+        coupling_gate,
+        weight,
+    ).reshape(
         batch_size, sequence_length, n_variables * state_dim, n_variables * state_dim
     )
     return torch.diag_embed(decay.reshape(batch_size, sequence_length, -1)) + coupling_part
@@ -139,10 +145,8 @@ def snapshot(model: CausalSSM, probe: Tensor) -> dict[str, Any]:
     record: dict[str, Any] = {
         "spectral_radius": transition_spectral_radius(model, probe),
         "hidden_max_abs": hidden_state_max_abs(model, probe),
-        "coupling_weight_spectral_norm": float(
-            torch.linalg.matrix_norm(
-                model.layers[0].coupling_projection.weight.detach(), ord=2
-            ).item()
+        "coupling_weight_max_row_sum": float(
+            model.layers[0]._effective_coupling_weight().detach().abs().sum(dim=-1).max().item()
         ),
         "decay_min": float(
             torch.exp(-torch.exp(model.layers[0].logA.detach())).min().item()
@@ -279,7 +283,7 @@ def format_report(report: dict[str, Any]) -> str:
         lines.append(f"== {variant_id} ==")
         lines.append(
             "epoch | loss | rho_max | rho_mean | hidden_max | lag_in_row | lag_fc_row | "
-            "||W||_2 | g:lag_in | g:lag_fc | g:coup | g:gate | g:dt | g:in | g:out | g:logA"
+            "||W||_inf | g:lag_in | g:lag_fc | g:coup | g:gate | g:dt | g:in | g:out | g:logA"
         )
         for record in variant_report["epochs"]:
             grads = record.get("grad_norm_max", {})
@@ -293,7 +297,7 @@ def format_report(report: dict[str, Any]) -> str:
                         f"{record['hidden_max_abs']:.4g}",
                         f"{record['lag_input_max_row_sum']:.4g}",
                         f"{record['lag_forecast_max_row_sum']:.4g}",
-                        f"{record['coupling_weight_spectral_norm']:.4g}",
+                        f"{record['coupling_weight_max_row_sum']:.4g}",
                     ]
                     + [
                         f"{grads.get(group, float('nan')):.3g}"
