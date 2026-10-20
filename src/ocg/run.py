@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import math
 import resource
 import time
 from collections.abc import Sequence
@@ -79,6 +80,31 @@ def _mapping(value: Any, name: str) -> dict[str, Any]:
     if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
         raise ValueError(f"{name} must be a mapping with string keys")
     return value
+
+
+def _sanitize_non_finite(value: Any) -> tuple[Any, bool]:
+    """Recursively replace non-finite floats with None and report if any were found."""
+    if isinstance(value, float) and not isinstance(value, bool):
+        if not math.isfinite(value):
+            return None, True
+        return value, False
+    if isinstance(value, dict):
+        sanitized_dict: dict[str, Any] = {}
+        found_non_finite = False
+        for key, item in value.items():
+            sanitized_item, item_non_finite = _sanitize_non_finite(item)
+            sanitized_dict[key] = sanitized_item
+            found_non_finite = found_non_finite or item_non_finite
+        return sanitized_dict, found_non_finite
+    if isinstance(value, list):
+        sanitized_list: list[Any] = []
+        found_non_finite = False
+        for item in value:
+            sanitized_item, item_non_finite = _sanitize_non_finite(item)
+            sanitized_list.append(sanitized_item)
+            found_non_finite = found_non_finite or item_non_finite
+        return sanitized_list, found_non_finite
+    return value, False
 
 
 def _load_config(path: str | Path) -> dict[str, Any]:
@@ -571,6 +597,13 @@ def run_experiment(
             reports[variant_id]["regret_vs_oracle"] = regret_vs_oracle(
                 predictions, oracle_predictions, test_targets
             )
+
+    for variant_id, report in list(reports.items()):
+        sanitized_report, diverged = _sanitize_non_finite(report)
+        if diverged:
+            sanitized_report["diverged"] = True
+            print(f"WARNING: variant {variant_id} diverged with non-finite values")
+        reports[variant_id] = sanitized_report
 
     result: dict[str, Any] = {
         "config": str(config_path),

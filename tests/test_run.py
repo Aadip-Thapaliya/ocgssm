@@ -227,3 +227,44 @@ def test_real_csv_path_override(tmp_path: Path) -> None:
 
     result = run_experiment(config_path, tmp_path / "csv.json", data_path=csv_path)
     assert result["variants"]["revin_linear"]["forecast"]["mse"] >= 0
+
+
+def test_run_experiment_sanitizes_non_finite_variant_values(
+    tmp_path: Path,
+    monkeypatch: Any,
+    capsys: Any,
+) -> None:
+    """A variant report with inf produces valid JSON with diverged=True while others stay unchanged."""
+    import ocg.run as run_module
+
+    original_train_offline = run_module.train_offline
+    call_count = 0
+
+    def patched_train_offline(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal call_count
+        call_count += 1
+        result = original_train_offline(*args, **kwargs)
+        if call_count == 2:
+            result["train_mse"] = [float("inf")]
+        return result
+
+    monkeypatch.setattr(run_module, "train_offline", patched_train_offline)
+
+    config_path = tmp_path / "diverged.yaml"
+    output_path = tmp_path / "diverged.json"
+    config_path.write_text(yaml.safe_dump(_synthetic_config()), encoding="utf-8")
+
+    result = run_experiment(config_path, output_path)
+    captured = capsys.readouterr().out
+    assert "WARNING" in captured
+    assert "random" in captured
+    assert result["variants"]["random"]["diverged"] is True
+    assert result["variants"]["random"]["training"]["train_mse"] == [None]
+    assert "diverged" not in result["variants"]["identity"]
+    assert "diverged" not in result["variants"]["oracle"]
+    assert all(
+        value is not None
+        for value in result["variants"]["identity"]["training"]["train_mse"]
+    )
+    assert json.loads(output_path.read_text(encoding="utf-8")) == result
+
