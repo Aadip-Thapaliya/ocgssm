@@ -296,3 +296,55 @@ def test_grad_clip_defaults_on_and_can_be_disabled(tmp_path: Path, monkeypatch: 
         config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
         run_experiment(config_path, tmp_path / f"disabled_{mode}.json")
     assert seen == [1.0, None, 1.0, None]
+
+
+def test_divergence_flags_relative_blowups() -> None:
+    """Finite blow-ups are flagged: MSE > 10x identity or epoch loss > 100x its first epoch."""
+    from ocg.run import _divergence_reasons
+
+    identity = {"forecast": {"mse": 0.02}, "training": {"train_mse": [0.05, 0.03], "validation_mse": [0.03, 0.025]}}
+    fine = {"forecast": {"mse": 0.19}, "training": {"train_mse": [0.05, 0.04], "validation_mse": [0.2, 0.2]}}
+    bad_test = {"forecast": {"mse": 0.21}, "training": {"train_mse": [0.05, 0.04], "validation_mse": [0.03, 0.025]}}
+    bad_val = {"forecast": {"mse": 0.02}, "training": {"train_mse": [0.05, 0.04], "validation_mse": [0.03, 0.31]}}
+    bad_epoch = {"forecast": {"mse": 0.02}, "training": {"train_mse": [0.05, 5.1], "validation_mse": [0.03, 0.02]}}
+    bad_online = {"forecast": {"mse": 0.02}, "training": {"running_mse": [0.05, 3.0, 6.0]}}
+    assert _divergence_reasons(identity, identity) == []
+    assert _divergence_reasons(fine, identity) == []
+    assert _divergence_reasons(bad_test, identity) == ["test_mse_exceeds_10x_identity"]
+    assert _divergence_reasons(bad_val, identity) == ["validation_mse_exceeds_10x_identity"]
+    assert _divergence_reasons(bad_epoch, identity) == ["epoch_loss_exceeds_100x_first_epoch"]
+    assert _divergence_reasons(bad_online, identity) == ["epoch_loss_exceeds_100x_first_epoch"]
+    assert _divergence_reasons(bad_test, None) == []
+    assert _divergence_reasons(bad_epoch, None) == ["epoch_loss_exceeds_100x_first_epoch"]
+
+
+def test_run_experiment_flags_finite_divergence(tmp_path: Path, monkeypatch: Any, capsys: Any) -> None:
+    """A finite but exploded variant is marked diverged with reasons; non-finite handling is kept."""
+    import ocg.run as run_module
+
+    original_train_offline = run_module.train_offline
+    call_count = 0
+
+    def patched_train_offline(*args: Any, **kwargs: Any) -> dict[str, Any]:
+        nonlocal call_count
+        call_count += 1
+        result = original_train_offline(*args, **kwargs)
+        if call_count == 2:
+            result["train_mse"] = [0.01, 50.0]
+        if call_count == 3:
+            result["validation_mse"] = [float("inf")]
+        return result
+
+    monkeypatch.setattr(run_module, "train_offline", patched_train_offline)
+    config_path = tmp_path / "finite_diverged.yaml"
+    config_path.write_text(yaml.safe_dump(_synthetic_config()), encoding="utf-8")
+    result = run_experiment(config_path, tmp_path / "finite_diverged.json")
+    captured = capsys.readouterr().out
+    assert "diverged" not in result["variants"]["identity"]
+    assert result["variants"]["random"]["diverged"] is True
+    assert result["variants"]["random"]["divergence_reasons"] == ["epoch_loss_exceeds_100x_first_epoch"]
+    assert result["variants"]["oracle"]["diverged"] is True
+    assert "non_finite_values" in result["variants"]["oracle"]["divergence_reasons"]
+    assert result["variants"]["oracle"]["training"]["validation_mse"] == [None]
+    assert "WARNING: variant random diverged" in captured
+    assert "WARNING: variant oracle diverged" in captured

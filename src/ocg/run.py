@@ -116,6 +116,53 @@ def _grad_clip_norm(training_config: dict[str, Any]) -> float | None:
     return None if value is None else float(value)
 
 
+DIVERGENCE_RELATIVE_FACTOR = 10.0
+DIVERGENCE_EPOCH_FACTOR = 100.0
+
+
+def _finite_float(value: Any) -> float | None:
+    """Return value as a finite float, or None if missing or non-finite."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    number = float(value)
+    return number if math.isfinite(number) else None
+
+
+def _divergence_reasons(report: dict[str, Any], identity_report: dict[str, Any] | None) -> list[str]:
+    """List finite-blow-up reasons for one variant report, relative to the identity report.
+
+    Flags test or final validation MSE above 10x identity's, and any epoch
+    (or online running) loss above 100x the first one. Non-finite values are
+    handled separately by the caller.
+    """
+    reasons: list[str] = []
+    training = report.get("training", {})
+    if identity_report is not None and identity_report is not report:
+        identity_training = identity_report.get("training", {})
+        test_mse = _finite_float(report.get("forecast", {}).get("mse"))
+        identity_test = _finite_float(identity_report.get("forecast", {}).get("mse"))
+        if test_mse is not None and identity_test is not None and identity_test > 0:
+            if test_mse > DIVERGENCE_RELATIVE_FACTOR * identity_test:
+                reasons.append("test_mse_exceeds_10x_identity")
+        validation = training.get("validation_mse") or []
+        identity_validation = identity_training.get("validation_mse") or []
+        if validation and identity_validation:
+            validation_mse = _finite_float(validation[-1])
+            identity_val = _finite_float(identity_validation[-1])
+            if validation_mse is not None and identity_val is not None and identity_val > 0:
+                if validation_mse > DIVERGENCE_RELATIVE_FACTOR * identity_val:
+                    reasons.append("validation_mse_exceeds_10x_identity")
+    losses = training.get("train_mse") or training.get("running_mse") or []
+    first = _finite_float(losses[0]) if losses else None
+    if first is not None and first > 0:
+        for loss in losses[1:]:
+            number = _finite_float(loss)
+            if number is not None and number > DIVERGENCE_EPOCH_FACTOR * first:
+                reasons.append("epoch_loss_exceeds_100x_first_epoch")
+                break
+    return reasons
+
+
 def _load_config(path: str | Path) -> dict[str, Any]:
     """Load and validate a YAML experiment config into a mapping."""
     with Path(path).open(encoding="utf-8") as config_file:
@@ -600,11 +647,23 @@ def run_experiment(
                 predictions, oracle_predictions, test_targets
             )
 
+    identity_report = next(
+        (
+            reports[str(variant["id"])]
+            for variant in _model_variants(model_config)
+            if variant.get("name") == "ocg" and variant.get("graph_mode") == "identity"
+        ),
+        None,
+    )
     for variant_id, report in list(reports.items()):
-        sanitized_report, diverged = _sanitize_non_finite(report)
-        if diverged:
+        reasons = _divergence_reasons(report, identity_report)
+        sanitized_report, non_finite = _sanitize_non_finite(report)
+        if non_finite:
+            reasons.insert(0, "non_finite_values")
+        if reasons:
             sanitized_report["diverged"] = True
-            print(f"WARNING: variant {variant_id} diverged with non-finite values")
+            sanitized_report["divergence_reasons"] = reasons
+            print(f"WARNING: variant {variant_id} diverged: {', '.join(reasons)}")
         reports[variant_id] = sanitized_report
 
     result: dict[str, Any] = {
