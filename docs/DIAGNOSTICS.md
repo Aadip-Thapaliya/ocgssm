@@ -34,6 +34,24 @@ Warm-start updates logits (`warm_start_logit_delta_l1 > 0`) and improves
 learned graph AUROC/validation loss, but learned still trails identity on this
 reduced setup, so additional stabilization/tuning is still required.
 
+### Step b: validation threshold calibration modes
+
+Learned graph metrics now support `fixed_0.5`, `density_prior`, and `best_f1`
+threshold calibration (selected on the validation split). Reduced h=6 runs
+with seeds 17/18/19 produced:
+
+| D | Mode | SHD (mean ± std) | F1 (mean ± std) | Threshold (mean ± std) |
+|---:|---|---:|---:|---:|
+| 5 | fixed_0.5 | 13.67 ± 1.70 | 0.2838 ± 0.1084 | 0.5000 ± 0.0000 |
+| 5 | density_prior | 13.67 ± 1.25 | 0.3452 ± 0.0541 | 0.4750 ± 0.0468 |
+| 5 | best_f1 | 18.00 ± 7.48 | 0.4459 ± 0.0391 | 0.4267 ± 0.0704 |
+| 20 | fixed_0.5 | 152.00 ± 7.07 | 0.1058 ± 0.0377 | 0.5000 ± 0.0000 |
+| 20 | density_prior | 144.33 ± 8.26 | 0.0890 ± 0.0226 | 0.5421 ± 0.0112 |
+| 20 | best_f1 | 522.67 ± 100.97 | 0.1916 ± 0.0115 | 0.3567 ± 0.0125 |
+
+`density_prior` is the default because it improves (or preserves) SHD without
+using test information.
+
 ## Sanity run before Step 4 model changes
 
 Configuration: `configs/sanity.yaml` (seed 17, 4,000 steps, `switch_at = 4,000`,

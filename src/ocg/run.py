@@ -33,6 +33,47 @@ from ocg.train import (
 )
 
 
+def _calibrated_graph_threshold(
+    predicted_graph: Tensor,
+    validation_true_graph: Tensor,
+) -> float:
+    """Select threshold in [0,1] maximizing validation F1 for (K,D,D) graphs."""
+    candidate_thresholds = torch.linspace(
+        0.05,
+        0.95,
+        steps=91,
+        device=predicted_graph.device,
+        dtype=predicted_graph.dtype,
+    )
+    best_threshold = 0.5
+    best_f1 = float("-inf")
+    best_shd = float("inf")
+    for threshold_tensor in candidate_thresholds:
+        threshold = float(threshold_tensor.item())
+        metrics = graph_metrics(predicted_graph, validation_true_graph, threshold=threshold)
+        f1 = float(metrics["f1"])
+        shd = float(metrics["shd"])
+        if f1 > best_f1 or (f1 == best_f1 and shd < best_shd):
+            best_f1 = f1
+            best_shd = shd
+            best_threshold = threshold
+    return best_threshold
+
+
+def _density_prior_threshold(predicted_graph: Tensor, density: float) -> float:
+    """Select threshold so predicted (K,D,D) edge count matches a target density."""
+    if not 0.0 <= density <= 1.0:
+        raise ValueError("density must be in [0,1]")
+    scores = predicted_graph.reshape(-1)
+    edge_count = int(round(density * scores.numel()))
+    if edge_count <= 0:
+        return 1.0
+    if edge_count >= scores.numel():
+        return 0.0
+    kth_value = torch.topk(scores, k=edge_count, largest=True).values[-1]
+    return float(kth_value.item())
+
+
 def _mapping(value: Any, name: str) -> dict[str, Any]:
     """Require a YAML mapping at a named configuration location."""
     if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
@@ -418,8 +459,31 @@ def run_experiment(
         learner = getattr(model, "graph_learner", None)
         if graph is not None:
             truth_graph = test_graph.mean(dim=0)
+            graph_threshold = 0.5
+            graph_options = _mapping(variant.get("graph", {}), "model.graph")
+            calibration_mode = str(graph_options.get("threshold_calibration", "density_prior"))
+            if learner is not None and validation_graphs is not None:
+                if calibration_mode == "best_f1":
+                    graph_threshold = _calibrated_graph_threshold(
+                        learner.adjacency().detach(),
+                        validation_graphs.mean(dim=0),
+                    )
+                elif calibration_mode == "density_prior":
+                    graph_threshold = _density_prior_threshold(
+                        learner.adjacency().detach(),
+                        float(data_config.get("sparsity", 0.5)),
+                    )
+                elif calibration_mode != "fixed_0.5":
+                    raise ValueError(
+                        "model.graph.threshold_calibration must be best_f1, density_prior, or fixed_0.5"
+                    )
             if learner is not None:
-                report["graph"] = graph_metrics(learner.adjacency().detach(), truth_graph)
+                report["graph"] = graph_metrics(
+                    learner.adjacency().detach(),
+                    truth_graph,
+                    threshold=graph_threshold,
+                )
+                report["graph"]["threshold"] = graph_threshold
             elif isinstance(model, CausalSSM):
                 if model.graph_mode == "identity":
                     report["graph"] = {
@@ -462,7 +526,11 @@ def run_experiment(
                                     step_shd, switch_index
                                 )
                     report["graph"]["online_final_shd"] = int(
-                        graph_metrics(history[-1], test_graph[-1])["shd"]
+                        graph_metrics(
+                            history[-1],
+                            test_graph[-1],
+                            threshold=graph_threshold,
+                        )["shd"]
                     )
         reports[variant_id] = report
 
