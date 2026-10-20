@@ -121,3 +121,41 @@ mixing and a direct graph-masked lag forecast head, produced:
 Oracle is 13.0% lower than identity, passing the required 10% sanity margin.
 The same model and config were used; comparison to the pre-Step-4 run is
 identity 0.019827 -> 0.019708 and oracle 0.019198 -> 0.017144.
+
+## D=20 stability
+
+Setup: [stability_d20.yaml](/workspaces/ocgssm/configs/stability_d20.yaml)
+(`sanity_d20.yaml` shrunk to `n_steps=1500`, `switch_at=1500`, 10 epochs,
+seed 17, offline, Adam lr 0.003, no clipping) run through
+`python scripts/diagnose_stability.py --variants identity oracle`. The
+"spectral radius" is the largest |eigenvalue| of the effective one-step state
+transition `diag(vec(decay)) + (diag(gate) A_cross) (x) W` evaluated per
+window/time step on a 32-window probe batch (max over the probe), and
+"hidden max" is max |hidden state| over the same probe.
+
+### Before the fix (`results/diagnose_stability_d20_before.json`)
+
+| Variant | Epoch | Train loss | Spectral radius (max) | Hidden max | Lag-input max row sum | Max grad norm (coupling / gate / input / logA) |
+|---|---:|---:|---:|---:|---:|---|
+| identity | 0 (init) | - | 0.493 | 0.47 | 0 | - |
+| identity | 1 | 0.0405 | 0.530 | 0.34 | 0.054 | 0 / 0 / 4.7e-3 / 5.8e-4 |
+| identity | 10 | 0.0236 | 0.624 | 0.26 | 0.356 | 0 / 0 / 1.8e-3 / 2.0e-4 |
+| oracle | 0 (init) | - | **2.011** | **9.3e4** | 0 | - |
+| oracle | 1 | 3.43e6 | 1.591 | 853 | 0.101 | 6.6e9 / 1.0e9 / 2.0e9 / 2.2e8 |
+| oracle | 2 | 4982 | 1.569 | 738 | 0.110 | 8.8e5 / 1.8e5 / 1.8e5 / 4.4e4 |
+| oracle | 10 | 2634 | 1.554 | 570 | 0.112 | 5.1e5 / 9.5e4 / 1.0e5 / 2.5e4 |
+
+Finding: the oracle variant is unstable **at initialization, before any
+gradient step**. The spectral radius of the one-step transition is 2.0 at
+epoch 0 and the hidden state reaches 9.3e4 inside a single 24-step window,
+so the first forecast loss is 3.4e6 and the first-epoch gradients are 1e8-1e9.
+Training then only slowly shrinks the radius toward ~1.55; it never becomes
+contractive. The cause is the un-normalized cross-variable coupling: at D=20,
+sparsity 0.1 the aggregate cross-adjacency has row sums up to 8 (mean 4.35;
+dense would be 19), `coupling_projection` is initialized with
+`||W||_2 ~ 0.97`, and the gate starts at ~0.5, so the coupling term alone has
+gain ~4 on top of decay ~0.5. At D=5 (sparsity 0.2) row sums are <= 3 and the
+realized radius stayed below one, which is why the same code trained there.
+The lag input mixer and lag forecast readout row sums stay below 0.45 for both
+variants and are not implicated; `logA`/decay is not implicated either
+(identity decay drifts only 0.49 -> 0.62).
