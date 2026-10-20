@@ -75,6 +75,9 @@ def _density_prior_threshold(predicted_graph: Tensor, density: float) -> float:
     return float(kth_value.item())
 
 
+DEFAULT_GRAD_CLIP_NORM = 1.0
+
+
 def _mapping(value: Any, name: str) -> dict[str, Any]:
     """Require a YAML mapping at a named configuration location."""
     if not isinstance(value, dict) or not all(isinstance(key, str) for key in value):
@@ -105,6 +108,12 @@ def _sanitize_non_finite(value: Any) -> tuple[Any, bool]:
             found_non_finite = found_non_finite or item_non_finite
         return sanitized_list, found_non_finite
     return value, False
+
+
+def _grad_clip_norm(training_config: dict[str, Any]) -> float | None:
+    """Return the gradient-norm clip (default 1.0); `grad_clip_norm: null` disables it."""
+    value = training_config.get("grad_clip_norm", DEFAULT_GRAD_CLIP_NORM)
+    return None if value is None else float(value)
 
 
 def _load_config(path: str | Path) -> dict[str, Any]:
@@ -423,11 +432,7 @@ def run_experiment(
                 ),
                 optimizer_name=str(training_config.get("optimizer", "adam")),
                 weight_decay=float(training_config.get("weight_decay", 0.0)),
-                grad_clip_norm=(
-                    float(training_config["grad_clip_norm"])
-                    if "grad_clip_norm" in training_config
-                    else None
-                ),
+                grad_clip_norm=_grad_clip_norm(training_config),
                 lr_schedule=str(training_config.get("lr_schedule", "none")),
                 min_learning_rate=float(training_config.get("min_learning_rate", 0.0)),
                 early_stopping_patience=(
@@ -459,11 +464,7 @@ def run_experiment(
                 return_tensors=True,
                 optimizer_name=str(training_config.get("optimizer", "adam")),
                 weight_decay=float(training_config.get("weight_decay", 0.0)),
-                grad_clip_norm=(
-                    float(training_config["grad_clip_norm"])
-                    if "grad_clip_norm" in training_config
-                    else None
-                ),
+                grad_clip_norm=_grad_clip_norm(training_config),
             )
             if selected_device.type == "cuda":
                 torch.cuda.synchronize(selected_device)

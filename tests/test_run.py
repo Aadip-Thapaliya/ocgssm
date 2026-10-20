@@ -268,3 +268,31 @@ def test_run_experiment_sanitizes_non_finite_variant_values(
     )
     assert json.loads(output_path.read_text(encoding="utf-8")) == result
 
+
+
+def test_grad_clip_defaults_on_and_can_be_disabled(tmp_path: Path, monkeypatch: Any) -> None:
+    """Offline and online runs clip gradients at 1.0 unless the config sets grad_clip_norm null."""
+    import ocg.run as run_module
+
+    seen: list[float | None] = []
+
+    def capture(original: Any) -> Any:
+        def wrapped(*args: Any, **kwargs: Any) -> dict[str, Any]:
+            seen.append(kwargs.get("grad_clip_norm"))
+            return original(*args, **kwargs)
+
+        return wrapped
+
+    monkeypatch.setattr(run_module, "train_offline", capture(run_module.train_offline))
+    monkeypatch.setattr(run_module, "train_online", capture(run_module.train_online))
+
+    for mode in ("offline", "online"):
+        config = _synthetic_config(mode)
+        config["model"]["variants"] = config["model"]["variants"][:1]
+        config_path = tmp_path / f"default_{mode}.yaml"
+        config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+        run_experiment(config_path, tmp_path / f"default_{mode}.json")
+        config["training"]["grad_clip_norm"] = None
+        config_path.write_text(yaml.safe_dump(config), encoding="utf-8")
+        run_experiment(config_path, tmp_path / f"disabled_{mode}.json")
+    assert seen == [1.0, None, 1.0, None]

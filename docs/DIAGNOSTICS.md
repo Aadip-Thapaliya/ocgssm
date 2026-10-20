@@ -199,3 +199,25 @@ No variant diverges, oracle beats identity on validation and test at both D,
 and identity is unchanged within noise (0.024 -> 0.02397). The lag mixer /
 readout row sums and `logA` were not implicated, so candidates (b) and (d)
 were not applied.
+
+### After fix (c): gradient-norm clipping on by default
+
+`training.grad_clip_norm` now defaults to 1.0 for offline and online runs
+(`grad_clip_norm: null` disables it). `sanity_d20.yaml` never set
+`optimizer`/`grad_clip_norm`/`lr_schedule`, so the earlier "stabilized
+controls" were inactive in that config path. Shrunk D=20 seed 17, fix (a)
+only vs fix (a)+(c):
+
+| Variant | Test MSE (a) | Test MSE (a)+(c) | Val MSE (a) | Val MSE (a)+(c) |
+|---|---:|---:|---:|---:|
+| identity | 0.02397 | 0.02417 | 0.02646 | 0.02672 |
+| dense | 0.01812 | 0.01812 | 0.01952 | 0.01952 |
+| random | 0.02310 | 0.02310 | 0.02547 | 0.02547 |
+| oracle | 0.02099 | 0.02099 | 0.02305 | 0.02305 |
+| learned | 0.01816 | 0.01816 | 0.01968 | 0.01968 |
+
+With the coupling bounded, clipping never activates for the cross-variable
+variants (gradient norms ~1e-3); identity moves by 0.0002 (noise level). It is
+kept as a safety net, not as a quality lever. AdamW/warmup/weight decay were
+not adopted as defaults because the diagnosis does not implicate the
+optimizer and `grad_clip_norm` alone is already inert here.
