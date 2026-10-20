@@ -206,6 +206,7 @@ def train_online(
     seed: int = 0,
     output_path: str | Path | None = None,
     oracle_graphs: Tensor | None = None,
+    return_tensors: bool = False,
 ) -> dict[str, Any]:
     """Run prequential training on (N,L,D)/(N,H,D) windows and optional oracle (N,K,D,D)."""
     _validate_windows(inputs, targets)
@@ -227,21 +228,21 @@ def train_online(
     if graph_learner is not None and not isinstance(graph_learner, GraphLearner):
         raise TypeError("model.graph_learner must be a GraphLearner")
 
-    predictions: list[Tensor] = []
-    squared_errors: list[float] = []
+    predictions = torch.empty_like(targets)
+    squared_errors = torch.empty(inputs.shape[0], device=inputs.device, dtype=inputs.dtype)
     graph_history: list[Tensor] = []
     detections: list[bool] = []
+    model.train()
     for index in range(inputs.shape[0]):
-        model.train()
         window = inputs[index : index + 1]
         target = targets[index : index + 1]
         if oracle_graphs is not None:
             _set_oracle_graph(model, oracle_graphs[index])
-        optimizer.zero_grad()
+        optimizer.zero_grad(set_to_none=True)
         prediction = model(window)
-        predictions.append(prediction.detach().cpu().clone())
+        predictions[index] = prediction.detach()[0]
         loss = nn.functional.mse_loss(prediction, target)
-        squared_errors.append(float(loss.detach().item()))
+        squared_errors[index] = loss.detach()
         loss.backward()
         optimizer.step()
         if graph_learner is not None:
@@ -249,17 +250,22 @@ def train_online(
             graph_history.append(graph_learner.adjacency().detach().cpu().clone())
             detections.append(graph_learner.last_detection)
 
-    stacked_predictions = torch.cat(predictions, dim=0)
+    squared_errors_cpu = squared_errors.detach().cpu()
+    running_mse = torch.cumsum(squared_errors_cpu, dim=0) / torch.arange(
+        1,
+        squared_errors_cpu.shape[0] + 1,
+        dtype=squared_errors_cpu.dtype,
+    )
     results: dict[str, Any] = {
         "mode": "online",
         "seed": seed,
-        "prequential_mse": squared_errors,
-        "running_mse": [
-            sum(squared_errors[: index + 1]) / (index + 1)
-            for index in range(len(squared_errors))
-        ],
-        "predictions": stacked_predictions.tolist(),
+        "prequential_mse": squared_errors_cpu.tolist(),
+        "running_mse": running_mse.tolist(),
+        "predictions": predictions.detach().cpu().tolist(),
     }
+    if return_tensors:
+        results["predictions_tensor"] = predictions.detach()
+        results["prequential_mse_tensor"] = squared_errors.detach()
     if graph_learner is not None:
         results["graph_history"] = torch.stack(graph_history).tolist()
         results["detections"] = detections

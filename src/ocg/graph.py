@@ -84,17 +84,22 @@ class GraphLearner(nn.Module):
     def online_update(self, values: Tensor) -> float:
         """Apply one online optimizer step to a batch of (B,L,D) windows."""
         self._steps += 1
-        loss = self.structural_loss(values)
+        should_step = self._steps % self.graph_stride == 0
+        if should_step:
+            loss = self.structural_loss(values)
+        else:
+            with torch.no_grad():
+                loss = self.structural_loss(values)
         self.last_detection = self.detector.update(loss.detach())
         if self.last_detection:
             self._boost_remaining = self.boost_steps
-        if self._steps % self.graph_stride == 0:
+        if should_step:
             learning_rate = self._base_learning_rate
             if self._boost_remaining > 0:
                 learning_rate *= self.boost
             for parameter_group in self._optimizer.param_groups:
                 parameter_group["lr"] = learning_rate
-            self._optimizer.zero_grad()
+            self._optimizer.zero_grad(set_to_none=True)
             loss.backward()
             self._optimizer.step()
             with torch.no_grad():

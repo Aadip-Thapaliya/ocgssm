@@ -349,14 +349,16 @@ def run_experiment(
                 oracle_graphs=(
                     test_graph if variant.get("graph_mode") == "oracle" else None
                 ),
+                return_tensors=True,
             )
             if selected_device.type == "cuda":
                 torch.cuda.synchronize(selected_device)
             elapsed = time.perf_counter() - started
-            predictions = torch.tensor(
-                training_result["predictions"],
-                dtype=test_targets.dtype,
-                device=selected_device,
+            prediction_tensor = training_result.get("predictions_tensor")
+            if not isinstance(prediction_tensor, Tensor):
+                raise TypeError("online training did not return predictions_tensor")
+            predictions = prediction_tensor.to(
+                device=selected_device, dtype=test_targets.dtype
             )
             step_times = [elapsed / test_inputs.shape[0]] * test_inputs.shape[0]
         predictions_by_variant[variant_id] = predictions
@@ -367,7 +369,14 @@ def run_experiment(
             "training": {
                 key: value
                 for key, value in training_result.items()
-                if key not in {"predictions", "graph_history", "detections"}
+                if key
+                not in {
+                    "predictions",
+                    "graph_history",
+                    "detections",
+                    "predictions_tensor",
+                    "prequential_mse_tensor",
+                }
             },
             "efficiency": efficiency_metrics(
                 step_times,

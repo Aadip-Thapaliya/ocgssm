@@ -8,12 +8,12 @@ Benchmarked on CPU with `python scripts/bench_speed.py` using `L=24`, batch size
 
 | D | Metric | Before (reference) | After (fast) | Speedup |
 |---:|---|---:|---:|---:|
-| 5 | Forward ms/batch | 4.634 | 3.300 | 1.40x |
-| 5 | Backward ms/batch | 16.921 | 11.194 | 1.51x |
-| 5 | Online ms/step | 16.331 | 7.925 | 2.06x |
-| 20 | Forward ms/batch | 6.632 | 5.809 | 1.14x |
-| 20 | Backward ms/batch | 28.684 | 28.326 | 1.01x |
-| 20 | Online ms/step | 16.837 | 9.103 | 1.85x |
+| 5 | Forward ms/batch | 4.912 | 2.674 | 1.84x |
+| 5 | Backward ms/batch | 20.958 | 12.653 | 1.66x |
+| 5 | Online ms/step | 15.236 | 7.956 | 1.92x |
+| 20 | Forward ms/batch | 6.481 | 3.776 | 1.72x |
+| 20 | Backward ms/batch | 25.291 | 27.394 | 0.92x |
+| 20 | Online ms/step | 16.720 | 8.294 | 2.02x |
 
 ## Sanity run before Step 4 model changes
 
