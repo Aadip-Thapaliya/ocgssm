@@ -8,11 +8,19 @@ from torch.nn import functional as functional
 class CausalSSMLayer(nn.Module):
     """Scan values shaped (B,L,D) and produce hidden states shaped (B,L,D,N)."""
 
-    def __init__(self, n_variables: int, state_dim: int, embedding_dim: int) -> None:
+    def __init__(
+        self,
+        n_variables: int,
+        state_dim: int,
+        embedding_dim: int,
+        coupling_init_scale: float = 1.0,
+    ) -> None:
         """Create variable embeddings and state-space projections."""
         super().__init__()
         if n_variables < 1 or state_dim < 1 or embedding_dim < 1:
             raise ValueError("n_variables, state_dim, and embedding_dim must be positive")
+        if coupling_init_scale <= 0:
+            raise ValueError("coupling_init_scale must be positive")
         self.n_variables = n_variables
         self.state_dim = state_dim
         self.use_reference_forward = False
@@ -27,6 +35,8 @@ class CausalSSMLayer(nn.Module):
         self.output_projection = nn.Linear(feature_dim, state_dim)
         self.gate_projection = nn.Linear(feature_dim, 1)
         self.coupling_projection = nn.Linear(state_dim, state_dim, bias=False)
+        with torch.no_grad():
+            self.coupling_projection.weight.mul_(coupling_init_scale)
         self.logA = nn.Parameter(torch.zeros(state_dim))
 
     def _graph_features(self, adjacency: Tensor) -> tuple[Tensor, Tensor]:

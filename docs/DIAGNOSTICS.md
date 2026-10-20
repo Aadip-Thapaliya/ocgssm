@@ -52,6 +52,25 @@ with seeds 17/18/19 produced:
 `density_prior` is the default because it improves (or preserves) SHD without
 using test information.
 
+### Step d: stabilized training controls (reduced h=6)
+
+Compared two settings on seeds 17/18/19 with warm-start and density-prior
+thresholding:
+
+- Baseline: existing optimizer/training defaults.
+- Stabilized: `optimizer=adamw`, `weight_decay=1e-4`, `grad_clip_norm=1.0`,
+  `lr_schedule=cosine`, `min_learning_rate=1e-5`,
+  `early_stopping_patience=3`, `coupling_init_scale=0.5`.
+
+| D | Setting | Learned val MSE (mean ± std) | Learned test MSE (mean ± std) | Identity test MSE (mean ± std) |
+|---:|---|---:|---:|---:|
+| 5 | Baseline | 0.2594 ± 0.3227 | 0.2544 ± 0.3118 | 0.0297 ± 0.0102 |
+| 5 | Stabilized | 0.0234 ± 0.0023 | 0.0260 ± 0.0039 | 0.0283 ± 0.0029 |
+| 20 | Baseline | 6.34e20 ± 8.97e20 | 6.61e20 ± 9.35e20 | 0.0230 ± 0.0017 |
+| 20 | Stabilized | 0.0220 ± 0.0016 | 0.0225 ± 0.0021 | 0.0283 ± 0.0029 |
+
+These controls remove the learned-mode divergence seen on reduced D20 runs.
+
 ## Sanity run before Step 4 model changes
 
 Configuration: `configs/sanity.yaml` (seed 17, 4,000 steps, `switch_at = 4,000`,

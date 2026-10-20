@@ -217,6 +217,8 @@ def _build_model(
             oracle_graph=oracle_graph,
             random_seed=seed,
             random_sparsity=random_sparsity,
+            scan_implementation=str(config.get("scan_implementation", "fast")),
+            coupling_init_scale=float(config.get("coupling_init_scale", 1.0)),
         )
     raise ValueError(f"unsupported model name: {name!r}")
 
@@ -392,6 +394,20 @@ def run_experiment(
                     if is_oracle and validation_graphs is not None
                     else None
                 ),
+                optimizer_name=str(training_config.get("optimizer", "adam")),
+                weight_decay=float(training_config.get("weight_decay", 0.0)),
+                grad_clip_norm=(
+                    float(training_config["grad_clip_norm"])
+                    if "grad_clip_norm" in training_config
+                    else None
+                ),
+                lr_schedule=str(training_config.get("lr_schedule", "none")),
+                min_learning_rate=float(training_config.get("min_learning_rate", 0.0)),
+                early_stopping_patience=(
+                    int(training_config["early_stopping_patience"])
+                    if "early_stopping_patience" in training_config
+                    else None
+                ),
             )
             if warm_start_result is not None:
                 training_result.update(warm_start_result)
@@ -414,6 +430,13 @@ def run_experiment(
                     test_graph if variant.get("graph_mode") == "oracle" else None
                 ),
                 return_tensors=True,
+                optimizer_name=str(training_config.get("optimizer", "adam")),
+                weight_decay=float(training_config.get("weight_decay", 0.0)),
+                grad_clip_norm=(
+                    float(training_config["grad_clip_norm"])
+                    if "grad_clip_norm" in training_config
+                    else None
+                ),
             )
             if selected_device.type == "cuda":
                 torch.cuda.synchronize(selected_device)

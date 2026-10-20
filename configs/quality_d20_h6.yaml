@@ -18,6 +18,7 @@ model:
   state_dim: 12
   n_layers: 1
   embedding_dim: 8
+  coupling_init_scale: 0.5
   graph:
     learning_rate: 0.01
     sparsity_weight: 0.001
@@ -32,6 +33,7 @@ model:
     detector_min_std: 0.000001
     warm_start_epochs: 5
     warm_start_batch_size: 64
+    threshold_calibration: density_prior
   variants:
     - id: identity
       name: ocg
@@ -53,3 +55,9 @@ training:
   epochs: 12
   batch_size: 64
   learning_rate: 0.001
+  optimizer: adamw
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  lr_schedule: cosine
+  min_learning_rate: 0.00001
+  early_stopping_patience: 3

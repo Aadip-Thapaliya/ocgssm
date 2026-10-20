@@ -1,6 +1,7 @@
 """Offline and prequential training loops for forecasting models."""
 
 import json
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
@@ -160,11 +161,29 @@ def train_offline(
     regime_ids: Tensor | None = None,
     validation_oracle_graphs: Tensor | None = None,
     validation_regime_ids: Tensor | None = None,
+    optimizer_name: str = "adam",
+    weight_decay: float = 0.0,
+    grad_clip_norm: float | None = None,
+    lr_schedule: str = "none",
+    min_learning_rate: float = 0.0,
+    early_stopping_patience: int | None = None,
 ) -> dict[str, Any]:
     """Fit on (N,L,D)/(N,H,D) windows, isolating oracle batches by regime."""
     _validate_windows(train_inputs, train_targets)
     if epochs < 1 or batch_size < 1 or learning_rate <= 0:
         raise ValueError("epochs, batch_size, and learning_rate must be positive")
+    if optimizer_name not in {"adam", "adamw"}:
+        raise ValueError("optimizer_name must be adam or adamw")
+    if weight_decay < 0:
+        raise ValueError("weight_decay must be nonnegative")
+    if grad_clip_norm is not None and grad_clip_norm <= 0:
+        raise ValueError("grad_clip_norm must be positive when provided")
+    if lr_schedule not in {"none", "cosine"}:
+        raise ValueError("lr_schedule must be none or cosine")
+    if min_learning_rate < 0:
+        raise ValueError("min_learning_rate must be nonnegative")
+    if early_stopping_patience is not None and early_stopping_patience < 1:
+        raise ValueError("early_stopping_patience must be positive when provided")
     _validate_oracle_schedule(model, train_inputs, oracle_graphs, regime_ids)
     if (validation_inputs is None) != (validation_targets is None):
         raise ValueError("validation_inputs and validation_targets must be provided together")
@@ -182,9 +201,32 @@ def train_offline(
     parameters = list(model.parameters())
     if not parameters:
         raise ValueError("model must have trainable parameters")
-    optimizer = torch.optim.Adam(parameters, lr=learning_rate)
+    if optimizer_name == "adamw":
+        optimizer = torch.optim.AdamW(
+            parameters,
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
+    else:
+        optimizer = torch.optim.Adam(
+            parameters,
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
+    scheduler = (
+        torch.optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=epochs,
+            eta_min=min_learning_rate,
+        )
+        if lr_schedule == "cosine"
+        else None
+    )
     train_losses: list[float] = []
     validation_losses: list[float] = []
+    best_state: dict[str, Tensor] | None = None
+    best_validation = float("inf")
+    patience_remaining = early_stopping_patience
 
     for _ in range(epochs):
         model.train()
@@ -207,6 +249,8 @@ def train_offline(
                 optimizer.zero_grad()
                 loss = nn.functional.mse_loss(model(inputs), targets)
                 loss.backward()
+                if grad_clip_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(parameters, grad_clip_norm)
                 optimizer.step()
                 total_loss += loss.detach().item() * inputs.shape[0]
         train_losses.append(total_loss / n_examples)
@@ -235,6 +279,18 @@ def train_offline(
                         model(validation_inputs), validation_targets
                     )
             validation_losses.append(float(validation_loss.item()))
+            if validation_losses[-1] < best_validation:
+                best_validation = validation_losses[-1]
+                best_state = deepcopy(model.state_dict())
+                patience_remaining = early_stopping_patience
+            elif patience_remaining is not None:
+                patience_remaining -= 1
+                if patience_remaining <= 0:
+                    break
+        if scheduler is not None:
+            scheduler.step()
+    if best_state is not None:
+        model.load_state_dict(best_state)
 
     results: dict[str, Any] = {
         "mode": "offline",
@@ -256,11 +312,20 @@ def train_online(
     output_path: str | Path | None = None,
     oracle_graphs: Tensor | None = None,
     return_tensors: bool = False,
+    optimizer_name: str = "adam",
+    weight_decay: float = 0.0,
+    grad_clip_norm: float | None = None,
 ) -> dict[str, Any]:
     """Run prequential training on (N,L,D)/(N,H,D) windows and optional oracle (N,K,D,D)."""
     _validate_windows(inputs, targets)
     if learning_rate <= 0:
         raise ValueError("learning_rate must be positive")
+    if optimizer_name not in {"adam", "adamw"}:
+        raise ValueError("optimizer_name must be adam or adamw")
+    if weight_decay < 0:
+        raise ValueError("weight_decay must be nonnegative")
+    if grad_clip_norm is not None and grad_clip_norm <= 0:
+        raise ValueError("grad_clip_norm must be positive when provided")
     if oracle_graphs is not None:
         _validate_oracle_schedule(
             model,
@@ -272,7 +337,18 @@ def train_online(
     parameters = list(model.parameters())
     if not parameters:
         raise ValueError("model must have trainable parameters")
-    optimizer = torch.optim.Adam(parameters, lr=learning_rate)
+    if optimizer_name == "adamw":
+        optimizer = torch.optim.AdamW(
+            parameters,
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
+    else:
+        optimizer = torch.optim.Adam(
+            parameters,
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
     graph_learner = getattr(model, "graph_learner", None)
     if graph_learner is not None and not isinstance(graph_learner, GraphLearner):
         raise TypeError("model.graph_learner must be a GraphLearner")
@@ -293,6 +369,8 @@ def train_online(
         loss = nn.functional.mse_loss(prediction, target)
         squared_errors[index] = loss.detach()
         loss.backward()
+        if grad_clip_norm is not None:
+            torch.nn.utils.clip_grad_norm_(parameters, grad_clip_norm)
         optimizer.step()
         if graph_learner is not None:
             graph_learner.online_update(window)
