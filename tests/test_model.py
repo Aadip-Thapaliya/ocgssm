@@ -307,3 +307,54 @@ def test_fast_scan_matches_reference_forward_and_gradients(
             rtol=1e-5,
             atol=1e-5,
         )
+
+
+@pytest.mark.parametrize("graph_mode", ["dense", "oracle"])
+def test_fast_scan_matches_reference_with_active_coupling_bound(graph_mode: str) -> None:
+    """Parity holds when the coupling-weight bound is active and forward_last matches forward."""
+    torch.manual_seed(31)
+    n_variables, n_lags = 20, 2
+    oracle_graph = (
+        (torch.rand(n_lags, n_variables, n_variables) > 0.6).float()
+        if graph_mode == "oracle"
+        else None
+    )
+    models = []
+    for implementation in ("reference", "fast"):
+        model = CausalSSM(
+            n_variables=n_variables,
+            state_dim=6,
+            horizon=3,
+            n_lags=n_lags,
+            embedding_dim=4,
+            graph_mode=graph_mode,
+            oracle_graph=oracle_graph,
+            scan_implementation=implementation,
+            coupling_norm_bound=0.8,
+        ).double()
+        models.append(model)
+    reference, fast = models
+    with torch.no_grad():
+        reference.layers[0].coupling_projection.weight.mul_(25.0)
+        reference.lag_input_weights.normal_(std=0.3)
+    fast.load_state_dict(copy.deepcopy(reference.state_dict()))
+    effective = fast.layers[0]._effective_coupling_weight()
+    assert abs(effective.abs().sum(dim=-1).max().item() - 0.8) < 1e-9
+    values = torch.randn(8, 24, n_variables, dtype=torch.float64)
+    output_reference = reference(values)
+    output_fast = fast(values)
+    assert torch.isfinite(output_fast).all()
+    torch.testing.assert_close(output_fast, output_reference, rtol=1e-6, atol=1e-6)
+    adjacency = fast._adjacency(values)
+    mixed = fast._mix_lagged_inputs(values)
+    hidden, _ = fast.layers[0](mixed, adjacency)
+    torch.testing.assert_close(fast.layers[0].forward_last(mixed, adjacency), hidden[:, -1])
+    output_reference.square().mean().backward()
+    output_fast.square().mean().backward()
+    for (name, parameter), (_, fast_parameter) in zip(
+        reference.named_parameters(), fast.named_parameters()
+    ):
+        if parameter.grad is None:
+            assert fast_parameter.grad is None, name
+            continue
+        torch.testing.assert_close(fast_parameter.grad, parameter.grad, rtol=1e-6, atol=1e-6)

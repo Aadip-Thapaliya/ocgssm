@@ -419,6 +419,7 @@ def run_experiment(
     for variant in _model_variants(model_config):
         variant_id = str(variant["id"])
         variant_seed = seed
+        torch.manual_seed(variant_seed)
         model = _build_model(
             variant,
             int(series.shape[1]),

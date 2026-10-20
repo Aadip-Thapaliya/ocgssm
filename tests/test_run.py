@@ -348,3 +348,25 @@ def test_run_experiment_flags_finite_divergence(tmp_path: Path, monkeypatch: Any
     assert result["variants"]["oracle"]["training"]["validation_mse"] == [None]
     assert "WARNING: variant random diverged" in captured
     assert "WARNING: variant oracle diverged" in captured
+
+
+def test_run_experiment_is_reproducible_across_processes_state(tmp_path: Path) -> None:
+    """Same config gives identical results regardless of prior global RNG state."""
+    import torch
+
+    config_path = tmp_path / "repro.yaml"
+    config_path.write_text(yaml.safe_dump(_synthetic_config()), encoding="utf-8")
+    torch.manual_seed(1)
+    first = run_experiment(config_path, tmp_path / "first.json")
+    torch.manual_seed(999)
+    torch.randn(1000)
+    second = run_experiment(config_path, tmp_path / "second.json")
+    for variant_id in first["variants"]:
+        assert (
+            first["variants"][variant_id]["forecast"]["mse"]
+            == second["variants"][variant_id]["forecast"]["mse"]
+        )
+        assert (
+            first["variants"][variant_id]["training"]["train_mse"]
+            == second["variants"][variant_id]["training"]["train_mse"]
+        )
