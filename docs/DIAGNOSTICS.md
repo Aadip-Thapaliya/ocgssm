@@ -221,3 +221,66 @@ variants (gradient norms ~1e-3); identity moves by 0.0002 (noise level). It is
 kept as a safety net, not as a quality lever. AdamW/warmup/weight decay were
 not adopted as defaults because the diagnosis does not implicate the
 optimizer and `grad_clip_norm` alone is already inert here.
+
+### Step 4 verification: seeds 17/18/19 after all fixes
+
+Shrunk configs ([stability_d20.yaml](/workspaces/ocgssm/configs/stability_d20.yaml),
+[stability_d5.yaml](/workspaces/ocgssm/configs/stability_d5.yaml)) with the
+`seed`/`data.seed` fields set to 17, 18, 19. Model initialization is now
+seeded per variant (previously the first variant was built from the unseeded
+global RNG, so same-seed identity runs differed: first-epoch loss
+0.054/0.057/0.039). Values are mean ± population std over the three seeds;
+"Val" is the final-epoch validation MSE.
+
+D=20 (`n_variables=20`, sparsity 0.1):
+
+| Variant | Val MSE | Test MSE | Test per seed (17/18/19) | Diverged |
+|---|---:|---:|---|---:|
+| identity | 0.02484 ± 0.00348 | 0.02388 ± 0.00293 | 0.0240 / 0.0202 / 0.0274 | 0 |
+| dense | 0.01856 ± 0.00138 | 0.01813 ± 0.00128 | 0.0181 / 0.0166 / 0.0197 | 0 |
+| random | 0.02402 ± 0.00319 | 0.02321 ± 0.00280 | 0.0231 / 0.0198 / 0.0267 | 0 |
+| oracle | 0.02172 ± 0.00258 | 0.02094 ± 0.00220 | 0.0210 / 0.0182 / 0.0236 | 0 |
+| learned | 0.01863 ± 0.00158 | 0.01807 ± 0.00156 | 0.0182 / 0.0161 / 0.0199 | 0 |
+
+Oracle beats identity on validation and test on every seed (val
+0.02305/0.01811/0.02400 vs 0.02656/0.01998/0.02796; test
+0.02099/0.01822/0.02361 vs 0.02402/0.02022/0.02740). Dense and learned are
+lower still; see the honest note below.
+
+D=5 (`n_variables=5`, sparsity 0.2) regression check:
+
+| Variant | Val MSE | Test MSE | Test per seed (17/18/19) | Diverged |
+|---|---:|---:|---:|---:|
+| identity | 0.01501 ± 0.00080 | 0.01630 ± 0.00212 | 0.0192 / 0.0155 / 0.0142 | 0 |
+| dense | 0.01399 ± 0.00020 | 0.01490 ± 0.00128 | 0.0166 / 0.0147 / 0.0135 | 0 |
+| random | 0.01488 ± 0.00065 | 0.01615 ± 0.00191 | 0.0187 / 0.0157 / 0.0140 | 0 |
+| oracle | 0.01407 ± 0.00029 | 0.01509 ± 0.00146 | 0.0170 / 0.0147 / 0.0135 | 0 |
+| learned | 0.01411 ± 0.00041 | 0.01513 ± 0.00147 | 0.0171 / 0.0147 / 0.0136 | 0 |
+
+Identity stays inside the previous 0.0148-0.0214 range (0.0142-0.0192) and
+oracle is within 0.0002 of the best variant (dense) on each seed.
+
+Honest note: at both D the dense control matches or edges out the oracle
+(D=20 test 0.01813 vs 0.02094). With row-normalized coupling, dense simply
+averages all other variables, and the graph-masked lag readout with a dense
+mask is an unrestricted VAR, which this short, low-noise training setting
+can fit well. The oracle advantage over identity (the gate criterion) holds,
+but the graph does not yet beat a dense control here; no further tuning was
+done for that.
+
+### Full-setting confirmation (one run each, seed 17, within the 10-minute CPU cap)
+
+| Config | Variant | Test MSE before | Test MSE after | Val MSE after | Diverged |
+|---|---|---:|---:|---:|---:|
+| `sanity.yaml` (D=5, 4000 steps, 40 epochs) | identity | 0.019708 | 0.01971 | 0.01995 | no |
+| `sanity.yaml` | dense | - | 0.01648 | 0.01672 | no |
+| `sanity.yaml` | learned | 0.016494 | 0.01646 | 0.01673 | no |
+| `sanity.yaml` | random | 0.016913 | 0.01893 | 0.01902 | no |
+| `sanity.yaml` | oracle | 0.017144 | 0.01709 | 0.01736 | no |
+| `sanity_d20.yaml` data (6000 steps), 10 epochs, identity+oracle only | identity | - | 0.02320 | 0.02412 | no |
+| same | oracle | - | 0.02034 | 0.02093 | no |
+
+The full 40-epoch D=20 run (all five variants) would take roughly 45 minutes
+on CPU and was not run here; it is left for the Colab GPU run. Oracle is
+13.3% below identity on the full D=5 sanity run (was 13.0%) and 12.3% below
+on the full-data D=20 check.
