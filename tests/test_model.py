@@ -3,6 +3,7 @@
 import copy
 import time
 
+import pytest
 import torch
 from torch import Tensor
 
@@ -227,3 +228,82 @@ def test_scan_runtime_scales_with_sequence_length() -> None:
         long_seconds = (time.perf_counter() - started) / 3
 
     assert long_seconds < short_seconds * 10
+
+
+@pytest.mark.parametrize("graph_mode", ["identity", "dense", "random", "oracle", "learned"])
+@pytest.mark.parametrize("n_variables", [5, 20])
+@pytest.mark.parametrize("batch_size", [1, 32])
+def test_fast_scan_matches_reference_forward_and_gradients(
+    graph_mode: str,
+    n_variables: int,
+    batch_size: int,
+) -> None:
+    """Fast and reference scans match outputs and gradients for all graph modes."""
+    torch.manual_seed(23)
+    n_lags = 2
+    state_dim = 6
+    horizon = 3
+    sequence_length = 24
+    oracle_graph = None
+    if graph_mode == "oracle":
+        oracle_graph = (torch.rand(n_lags, n_variables, n_variables) > 0.7).float()
+    reference = CausalSSM(
+        n_variables=n_variables,
+        state_dim=state_dim,
+        horizon=horizon,
+        n_lags=n_lags,
+        n_layers=1,
+        embedding_dim=4,
+        graph_mode=graph_mode,
+        graph_learner=GraphLearner(n_variables=n_variables, n_lags=n_lags)
+        if graph_mode == "learned"
+        else None,
+        oracle_graph=oracle_graph,
+        random_seed=17,
+        random_sparsity=0.2,
+        scan_implementation="reference",
+    ).double()
+    fast = CausalSSM(
+        n_variables=n_variables,
+        state_dim=state_dim,
+        horizon=horizon,
+        n_lags=n_lags,
+        n_layers=1,
+        embedding_dim=4,
+        graph_mode=graph_mode,
+        graph_learner=GraphLearner(n_variables=n_variables, n_lags=n_lags)
+        if graph_mode == "learned"
+        else None,
+        oracle_graph=oracle_graph,
+        random_seed=17,
+        random_sparsity=0.2,
+        scan_implementation="fast",
+    ).double()
+    fast.load_state_dict(copy.deepcopy(reference.state_dict()))
+    reference.train()
+    fast.train()
+    input_reference = (
+        0.1 * torch.randn(batch_size, sequence_length, n_variables, dtype=torch.float64)
+    ).requires_grad_()
+    input_fast = input_reference.detach().clone().requires_grad_(True)
+    output_reference = reference(input_reference)
+    output_fast = fast(input_fast)
+    torch.testing.assert_close(output_fast, output_reference, rtol=1e-5, atol=1e-5)
+    loss_reference = output_reference.square().mean()
+    loss_fast = output_fast.square().mean()
+    loss_reference.backward()
+    loss_fast.backward()
+    torch.testing.assert_close(input_fast.grad, input_reference.grad, rtol=1e-5, atol=1e-5)
+    reference_grads = dict(reference.named_parameters())
+    fast_grads = dict(fast.named_parameters())
+    for name, parameter in reference_grads.items():
+        if parameter.grad is None:
+            continue
+        if fast_grads[name].grad is None:
+            raise AssertionError(f"Expected gradient for parameter {name}")
+        torch.testing.assert_close(
+            fast_grads[name].grad,
+            parameter.grad,
+            rtol=1e-5,
+            atol=1e-5,
+        )

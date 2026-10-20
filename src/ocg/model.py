@@ -24,6 +24,7 @@ class CausalSSM(nn.Module):
         oracle_graph: Tensor | None = None,
         random_seed: int = 0,
         random_sparsity: float | None = None,
+        scan_implementation: str = "fast",
     ) -> None:
         """Initialize the SSM stack, graph mode, and per-variable forecast head."""
         super().__init__()
@@ -43,6 +44,8 @@ class CausalSSM(nn.Module):
             raise ValueError("random_sparsity is required in random mode")
         if random_sparsity is not None and not 0.0 <= random_sparsity <= 1.0:
             raise ValueError("random_sparsity must be in [0,1]")
+        if scan_implementation not in {"fast", "reference"}:
+            raise ValueError("scan_implementation must be fast or reference")
         if graph_mode == "learned" and graph_learner is not None:
             if graph_learner.n_variables != n_variables or graph_learner.n_lags != n_lags:
                 raise ValueError("graph learner dimensions must match model dimensions")
@@ -56,6 +59,7 @@ class CausalSSM(nn.Module):
         self.n_lags = n_lags
         self.horizon = horizon
         self.graph_mode = graph_mode
+        self.scan_implementation = scan_implementation
         if graph_mode == "learned":
             self.graph_learner = graph_learner or GraphLearner(n_variables, n_lags)
         else:
@@ -82,6 +86,8 @@ class CausalSSM(nn.Module):
         self.layers = nn.ModuleList(
             CausalSSMLayer(n_variables, state_dim, embedding_dim) for _ in range(n_layers)
         )
+        for layer in self.layers:
+            layer.use_reference_forward = scan_implementation == "reference"
         self.lag_input_weights = nn.Parameter(
             torch.zeros(n_lags, n_variables, n_variables)
         )
@@ -169,13 +175,13 @@ class CausalSSM(nn.Module):
             raise ValueError("values must have shape (B,L,D) with configured D")
         adjacency = self._adjacency(values)
         layer_input = self._mix_lagged_inputs(values)
-        final_hidden: Tensor | None = None
-        for index, layer in enumerate(self.layers):
-            hidden, projected = layer(layer_input, adjacency)
-            final_hidden = hidden
-            if index < len(self.layers) - 1:
-                layer_input = self.residual_norms[index](layer_input + projected)
-        if final_hidden is None:
+        if len(self.layers) == 1:
+            last_state = self.layers[0].forward_last(layer_input, adjacency)
+            return self.head(last_state).transpose(1, 2) + self._direct_lag_forecast(values)
+        for index, layer in enumerate(self.layers[:-1]):
+            _, projected = layer(layer_input, adjacency)
+            layer_input = self.residual_norms[index](layer_input + projected)
+        if len(self.layers) < 1:
             raise RuntimeError("model has no SSM layers")
-        last_state = final_hidden[:, -1, :, :]
+        last_state = self.layers[-1].forward_last(layer_input, adjacency)
         return self.head(last_state).transpose(1, 2) + self._direct_lag_forecast(values)

@@ -1,5 +1,20 @@
 # Synthetic Gate Diagnostics
 
+## Speed
+
+Benchmarked on CPU with `python scripts/bench_speed.py` using `L=24`, batch size
+32, and online prequential timing over 160 steps. "Before" is the
+`_reference_forward` scan and "After" is the vectorized fast scan path.
+
+| D | Metric | Before (reference) | After (fast) | Speedup |
+|---:|---|---:|---:|---:|
+| 5 | Forward ms/batch | 4.634 | 3.300 | 1.40x |
+| 5 | Backward ms/batch | 16.921 | 11.194 | 1.51x |
+| 5 | Online ms/step | 16.331 | 7.925 | 2.06x |
+| 20 | Forward ms/batch | 6.632 | 5.809 | 1.14x |
+| 20 | Backward ms/batch | 28.684 | 28.326 | 1.01x |
+| 20 | Online ms/step | 16.837 | 9.103 | 1.85x |
+
 ## Sanity run before Step 4 model changes
 
 Configuration: `configs/sanity.yaml` (seed 17, 4,000 steps, `switch_at = 4,000`,
