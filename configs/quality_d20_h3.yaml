@@ -1,0 +1,63 @@
+seed: 17
+data:
+  type: synthetic
+  n_steps: 2200
+  n_variables: 20
+  n_lags: 2
+  switch_at: 1400
+  blend_steps: 0
+  sparsity: 0.1
+  noise_scale: 0.1
+  input_length: 24
+  horizon: 3
+  train_fraction: 0.6
+  validation_fraction: 0.2
+  seed: 17
+model:
+  name: ocg
+  state_dim: 12
+  n_layers: 1
+  embedding_dim: 8
+  coupling_init_scale: 0.5
+  graph:
+    learning_rate: 0.01
+    sparsity_weight: 0.001
+    temperature: 1.0
+    ema_decay: 0.95
+    graph_stride: 1
+    boost: 3.0
+    boost_steps: 20
+    detector_decay: 0.95
+    detector_threshold: 3.5
+    detector_warmup: 30
+    detector_min_std: 0.000001
+    warm_start_epochs: 5
+    warm_start_batch_size: 64
+    threshold_calibration: density_prior
+  variants:
+    - id: identity
+      name: ocg
+      graph_mode: identity
+    - id: dense
+      name: ocg
+      graph_mode: dense
+    - id: learned
+      name: ocg
+      graph_mode: learned
+    - id: random
+      name: ocg
+      graph_mode: random
+    - id: oracle
+      name: ocg
+      graph_mode: oracle
+training:
+  mode: offline
+  epochs: 12
+  batch_size: 64
+  learning_rate: 0.001
+  optimizer: adamw
+  weight_decay: 0.0001
+  grad_clip_norm: 1.0
+  lr_schedule: cosine
+  min_learning_rate: 0.00001
+  early_stopping_patience: 3
