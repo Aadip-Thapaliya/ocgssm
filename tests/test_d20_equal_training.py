@@ -1,6 +1,9 @@
 """Tests for the gated D20 equal-training evaluation harness."""
 
+import json
+
 import pytest
+import torch
 
 from ocg.train import train_online
 from scripts import d20_equal_training
@@ -10,12 +13,27 @@ from scripts.d20_equal_training import (
     _build_reduced_report,
     _development_data,
     _paired_summary,
+    _write_json,
     run_all,
 )
 
 
 def test_reduced_runner_binds_online_trainer() -> None:
     assert d20_equal_training.train_online is train_online
+
+
+def test_campaign_json_writer_serializes_tensor_values(tmp_path) -> None:
+    output = tmp_path / "campaign.json"
+
+    _write_json(
+        output,
+        {"scalar": torch.tensor(0.5), "series": torch.tensor([1.0, 2.0])},
+    )
+
+    assert json.loads(output.read_text(encoding="utf-8")) == {
+        "scalar": 0.5,
+        "series": [1.0, 2.0],
+    }
 
 
 def test_d20_development_subsplits_have_frozen_window_counts() -> None:

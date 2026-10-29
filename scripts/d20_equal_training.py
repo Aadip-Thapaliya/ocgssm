@@ -25,8 +25,8 @@ from ocg.train import _regime_ids_from_graphs, train_offline, train_online
 ROOT = Path("results/d20_equal_training")
 PROTOCOL = ROOT / "protocol.yaml"
 REDUCED_PROTOCOL = ROOT / "reduced_proposal_v2.yaml"
-FREEZE_MANIFEST = ROOT / "freeze_manifest_v3.json"
-CAMPAIGN_LEDGER = ROOT / "campaign_state_v3.json"
+FREEZE_MANIFEST = ROOT / "freeze_manifest_v4.json"
+CAMPAIGN_LEDGER = ROOT / "campaign_state_v4.json"
 DATA_LR_CANDIDATES = (0.0003, 0.001, 0.003)
 GRAPH_LR_CANDIDATES = (0.001, 0.01, 0.03)
 SELECTION_EPOCHS = 10
@@ -39,11 +39,18 @@ BOOTSTRAP_BLOCK_LENGTH = 12
 BOOTSTRAP_RESAMPLES = 2000
 
 
+def _json_default(value: Any) -> Any:
+    if isinstance(value, torch.Tensor):
+        tensor = value.detach().cpu()
+        return tensor.item() if tensor.ndim == 0 else tensor.tolist()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(path.suffix + ".tmp")
     temporary.write_text(
-        json.dumps(payload, indent=2, allow_nan=False) + "\n",
+        json.dumps(payload, indent=2, allow_nan=False, default=_json_default) + "\n",
         encoding="utf-8",
     )
     temporary.replace(path)
