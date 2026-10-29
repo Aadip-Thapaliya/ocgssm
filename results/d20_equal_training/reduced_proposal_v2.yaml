@@ -1,0 +1,138 @@
+protocol_version: 2
+status: approved_frozen_for_execution
+purpose: Compare graph utilization under equal offline pretraining and matched delayed-label online adaptation at D=20.
+development_gate:
+  completed: true
+  passed: true
+  evidence: results/d20_equal_training/development/headroom_gate.json
+  validation_raw_indices: [2933, 3199]
+  windows: 238
+  criteria:
+    directvar_over_identity_mean_mse_ratio: <= 0.95 at H1 and H2
+    paired_circular_block_bootstrap_95pct_upper_endpoint: < 1.0 at H1 and H2
+  observed:
+    H1:
+      identity_mse: 0.0130267739
+      directvar_mse: 0.0104985037
+      ratio: 0.8059173916
+      ci95: [0.7891969908, 0.8244475639]
+    H2:
+      identity_mse: 0.0132988581
+      directvar_mse: 0.0116103462
+      ratio: 0.8730333200
+      ci95: [0.8583387102, 0.8893375083]
+data:
+  generator: generate_svar
+  steps: 4000
+  variables: 20
+  lags: 2
+  sparsity: 0.1
+  noise_scale: 0.1
+  cross_variable_scale: 1.0
+  switch_at: 3600
+  blend_steps: 0
+  input_length: 24
+  horizon: 6
+  raw_chronological_splits:
+    train: [0, 2399]
+    validation: [2400, 3199]
+    test: [3200, 3999]
+  expected_windows:
+    train: 2371
+    validation: 771
+    test: 771
+  test_graph_timestamps: [3223, 3993]
+  test_pre_switch_windows: 377
+  test_post_switch_windows: 394
+seeds:
+  development_pair: {data: 31, model: 301}
+  held_out_pairs: [{data: 37, model: 401}, {data: 43, model: 503}, {data: 47, model: 607}]
+  held_out_status: untouched; use only after explicit user approval
+variants:
+  - identity
+  - dense
+  - learned_soft
+  - oracle
+  - var_direct
+side_checks:
+  - id: oracle_40_epoch_cap
+    data_seed: 37
+    model_seed: 401
+    variant: oracle
+    max_epochs: 40
+    early_stopping_patience: 5
+    monitor: Full validation MSE with strict improvement and min_delta 0.
+    restore: Lowest-validation-MSE checkpoint; preserve optimizer state.
+    online_schedule: Same delayed-label one-pass test stream as main campaign.
+    reporting: Separate raw result and report section; excluded from all primary variant tables, gates, and aggregates.
+training:
+  forecast_learning_rate: 0.001
+  graph_learning_rate: 0.01
+  selection_source: Frozen from training and development validation raw indices 2400-2665 only.
+  offline:
+    max_epochs: 20
+    early_stopping:
+      monitor: full validation MSE
+      patience: 5 consecutive epochs without strict improvement
+      min_delta: 0.0
+      restore: Lowest-validation-MSE checkpoint for every variant.
+      learned_graph_optimizer: Restore optimizer state paired with selected model and EMA checkpoint.
+    equal_protocol: Same cap, validation schedule, early-stopping rule, and data partition for every variant.
+    convergence_label: Any run that executes the full epoch cap is flagged not_converged_cap_reached, regardless of best checkpoint epoch.
+    directvar_note: DirectVAR is trained by the project's optimizer, not fitted by OLS.
+  online:
+    schedule: Identical one-pass delayed-label prequential updates over all 771 test windows.
+    forecast_optimizer: Reset at offline-to-online transition for every variant.
+    learned_graph_optimizer: Continue from validation-selected offline graph checkpoint, then update online.
+    detector: Disabled; no detector metrics or learning-rate boosts.
+graph_metrics:
+  snapshots: Timestamp-aligned pre-update graphs at the last input observation.
+  phases: Report validation post-pretraining and test pre-switch/post-switch AUROC and average precision.
+  binary_metrics: Select the F1 threshold using each seed's validation graphs only; hold it fixed for its test stream.
+  forecasts: Learned variant remains soft; no hard-mask ablation in this reduced campaign.
+statistics:
+  horizons_reported: [1, 2, 3, 4, 5, 6]
+  primary_gate_horizons: [1, 2]
+  seed_reporting: Preserve per-seed mean and median MSE by variant and horizon; report mean and median over the three seed-level estimates and aggregate inference seed statistics equally.
+  paired_bootstrap:
+    method: Circular moving-block percentile bootstrap of paired window errors.
+    block_length_windows: 12
+    resamples: 2000
+    confidence_level: 0.95
+    aggregation: Resample paired window errors within each seed; compute per-seed contrast, then average the three seeds equally for the interval. Report per-seed intervals too.
+  required_contrasts_at_H1_H2:
+    - learned_soft_vs_dense
+    - learned_soft_vs_oracle
+    - oracle_vs_var_direct
+held_out_gates:
+  point_estimate:
+    oracle_over_var_direct: <= 1.05 at H1 and H2.
+    learned_soft_over_oracle: <= 1.05 at H1 and H2.
+  paired_inference:
+    learned_soft_minus_dense_mse: 95% interval upper endpoint < 0 at H1 and H2.
+    note: Report paired mean-difference and MSE-ratio intervals for all required contrasts separately from point-estimate thresholds; do not treat windows as independent seeds.
+  selection: No test-based model, rate, threshold, checkpoint, or protocol selection.
+runtime:
+  measured_profile_seconds:
+    identity_epoch: 13.7895
+    learned_epoch: 14.7372
+    var_direct_epoch: 0.3143
+    identity_stream_window: 0.7775
+    learned_stream_window: 0.6758
+    var_direct_stream_window: 0.0281
+  maximum_epoch_estimate:
+    main_pretraining_seconds_all_seeds_at_cap: 3385.20
+    main_online_seconds_all_seeds: 7023.13
+    oracle_40_side_check_pretraining_seconds_at_cap: 551.58
+    oracle_40_side_check_online_seconds: 599.45
+    core_total_seconds: 11559.35
+    core_total_hours: 3.21
+    allowance_hours_10_to_20_percent: [3.53, 3.85]
+  execution_policy: Sequential only, as explicitly requested; no parallel processes. CPU has 14 cores/20 logical processors; available memory was 3.9 GB of 13.7 GB, and per-process peak RSS was not measured.
+freeze:
+  source_hashes: results/d20_equal_training/freeze_manifest_v2.json
+  execution_requires: Clean working tree and exact match of protocol and source hashes to the committed freeze manifest.
+prohibitions:
+  - Do not run random, DLinear, hard-mask, detector, real-data, or Colab variants in this reduced campaign.
+  - Do not modify the frozen protocol or choose settings using held-out outcomes.
+  - No GPU or paid compute; no commits, pushes, or pull requests.

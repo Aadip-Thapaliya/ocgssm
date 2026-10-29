@@ -1,0 +1,38 @@
+seed: 47
+data:
+  type: synthetic
+  n_steps: 400
+  n_variables: 8
+  n_lags: 3
+  switch_at: 280
+  blend_steps: 0
+  sparsity: 0.15
+  noise_scale: 0.1
+  input_length: 48
+  horizon: 12
+  train_fraction: 0.6
+  validation_fraction: 0.2
+  seed: 47
+model:
+  name: ocg
+  graph_mode: learned
+  state_dim: 12
+  n_layers: 2
+  embedding_dim: 8
+  graph:
+    learning_rate: 0.01
+    sparsity_weight: 0.001
+    temperature: 1.0
+    ema_decay: 0.95
+    graph_stride: 1
+    boost: 3.0
+    boost_steps: 20
+    detector_decay: 0.95
+    detector_threshold: 3.5
+    detector_warmup: 30
+    detector_min_std: 0.000001
+training:
+  mode: offline
+  epochs: 2
+  batch_size: 16
+  learning_rate: 0.001

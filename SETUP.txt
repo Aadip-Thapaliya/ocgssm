@@ -1,0 +1,81 @@
+OCG-SSM LOCAL WINDOWS SETUP
+Completed: 2026-10-29
+
+PROJECT
+C:\Users\aadip\Desktop\OCGSSM-Local
+
+Original project preserved:
+C:\Users\aadip\Desktop\ocgssm-main\ocgssm-main
+
+PRIVATE PYTHON
+Version: CPython 3.12.12, Windows x86-64
+Executable:
+C:\Users\aadip\Desktop\OCGSSM-Local\.python\cpython-3.12.12-windows-x86_64-none\python.exe
+
+VIRTUAL ENVIRONMENT
+C:\Users\aadip\Desktop\OCGSSM-Local\.venv
+Interpreter to select in an editor:
+C:\Users\aadip\Desktop\OCGSSM-Local\.venv\Scripts\python.exe
+
+System-site-packages are disabled. Python 3.11 and 3.14 remain installed
+and unchanged. No global PATH, file associations, or Python registration
+were changed. Do not move this folder without recreating the environment:
+virtual environments and the editable package install contain absolute paths.
+Do not delete .python: .venv depends on its private base interpreter.
+
+INSTALLED
+Project installed in editable mode, along with every requirements.txt package:
+torch 2.15.0+cpu, numpy 2.5.4, scipy 1.18.1, pandas 3.1.0,
+scikit-learn 1.9.1, PyYAML 6.0.3, matplotlib 3.11.2, tqdm 4.70.1,
+pytest 9.2.0, psutil 7.2.2, and their dependencies.
+Exact installed versions: requirements-local-lock.txt
+
+LAUNCH
+Double-click Run-Synthetic.cmd in the project folder.
+It runs on CPU and saves results\synthetic_abrupt_local.json.
+Double-click Open-Project-Terminal.cmd for an activated Command Prompt.
+Activation applies only to that terminal, not the global computer setup.
+
+PowerShell equivalent:
+Set-Location 'C:\Users\aadip\Desktop\OCGSSM-Local'
+.\.venv\Scripts\python.exe -m ocg.run --config configs\synthetic_abrupt.yaml --output results\synthetic_abrupt_local.json --device cpu
+
+Other configs:
+.\.venv\Scripts\python.exe -m ocg.run --config configs\synthetic_gradual.yaml --device cpu
+
+Tests:
+.\.venv\Scripts\python.exe -m pytest
+
+VERIFIED
+- All required library imports succeeded using the isolated interpreter.
+- pip check: no broken requirements.
+- Entire test suite: 36 passed, 1 non-failing PyTorch transformer warning.
+- Test report: results\local_setup_tests.xml
+- Documented synthetic abrupt benchmark completed successfully on CPU.
+- 202 test windows; finite forecast MSE: 0.04591904580593109.
+- Benchmark took approximately 29 seconds on this computer.
+- Result: results\synthetic_abrupt_local.json
+- CPU peak-memory reporting returned a positive Windows working-set value.
+
+LOCAL COMPATIBILITY CHANGE
+The original runner imported Unix-only resource unconditionally.
+Only this new copy was patched to use psutil for Windows peak-memory
+reporting, while retaining resource on Unix and correcting macOS units.
+psutil was added to the Windows dependency declarations, and a regression
+test for peak-memory reporting was added. The original source is unchanged.
+
+LIMITS
+This laptop has Intel Iris Xe graphics and no detected NVIDIA CUDA GPU.
+Use --device cpu; CUDA is unavailable in this environment.
+ETT, Electricity, and Traffic experiments need external CSV datasets.
+No datasets, remote/cloud execution, paid services, or GPU drivers were used.
+
+RECREATE IF NEEDED
+From this project folder with the private Python still present:
+.\.python\cpython-3.12.12-windows-x86_64-none\python.exe -m venv .venv
+.\.venv\Scripts\python.exe -m pip install torch==2.15.0+cpu --index-url https://download.pytorch.org/whl/cpu
+.\.venv\Scripts\python.exe -m pip install -r requirements-local-lock.txt
+
+The version snapshot includes this project's editable install at its
+current absolute location. Recreate it in the same folder, or update the
+editable path before installing if moving the project.

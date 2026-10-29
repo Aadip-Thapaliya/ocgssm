@@ -1,0 +1,10 @@
+torch
+numpy
+scipy
+pandas
+scikit-learn
+pyyaml
+matplotlib
+tqdm
+pytest
+psutil; sys_platform == "win32"
