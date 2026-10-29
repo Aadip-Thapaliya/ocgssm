@@ -2,6 +2,8 @@
 
 import pytest
 
+from ocg.train import train_online
+from scripts import d20_equal_training
 from scripts.d20_equal_training import (
     _build,
     _build_heldout_report,
@@ -10,6 +12,10 @@ from scripts.d20_equal_training import (
     _paired_summary,
     run_all,
 )
+
+
+def test_reduced_runner_binds_online_trainer() -> None:
+    assert d20_equal_training.train_online is train_online
 
 
 def test_d20_development_subsplits_have_frozen_window_counts() -> None:

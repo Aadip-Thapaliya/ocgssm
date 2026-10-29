@@ -19,12 +19,14 @@ from ocg.data import generate_svar, make_windows
 from ocg.eval import graph_metrics
 from ocg.graph import GraphLearner
 from ocg.run import _build_model, _select_graph_threshold
-from ocg.train import _regime_ids_from_graphs, train_offline
+from ocg.train import _regime_ids_from_graphs, train_offline, train_online
 
 
 ROOT = Path("results/d20_equal_training")
 PROTOCOL = ROOT / "protocol.yaml"
 REDUCED_PROTOCOL = ROOT / "reduced_proposal_v2.yaml"
+FREEZE_MANIFEST = ROOT / "freeze_manifest_v3.json"
+CAMPAIGN_LEDGER = ROOT / "campaign_state_v3.json"
 DATA_LR_CANDIDATES = (0.0003, 0.001, 0.003)
 GRAPH_LR_CANDIDATES = (0.001, 0.01, 0.03)
 SELECTION_EPOCHS = 10
@@ -845,7 +847,7 @@ def _run_heldout_pair(
             "completed_variants": list(existing["variants"]),
         },
     )
-    _write_json(ROOT / "campaign_state_v2.json", ledger)
+    _write_json(CAMPAIGN_LEDGER, ledger)
     for variant in variants:
         if variant in existing["variants"]:
             continue
@@ -872,7 +874,7 @@ def _run_heldout_pair(
             if len(existing["variants"]) == len(variants)
             else "in_progress"
         )
-        _write_json(ROOT / "campaign_state_v2.json", ledger)
+        _write_json(CAMPAIGN_LEDGER, ledger)
         print(
             json.dumps(
                 {
@@ -1051,7 +1053,7 @@ def _build_heldout_report(runs: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def _validate_frozen_commit() -> tuple[str, str, dict[str, str]]:
-    manifest_path = ROOT / "freeze_manifest_v2.json"
+    manifest_path = FREEZE_MANIFEST
     if not manifest_path.exists():
         raise RuntimeError("frozen protocol manifest is missing; refusing held-out run")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1104,7 +1106,7 @@ def _run_oracle40_side_check(
             "data_seed": data_seed,
             "model_seed": model_seed,
         }
-        _write_json(ROOT / "campaign_state_v2.json", ledger)
+        _write_json(CAMPAIGN_LEDGER, ledger)
         return existing
     data = _heldout_data(data_seed)
     checkpoint_path = directory / "checkpoints" / "oracle40_side_check.pt"
@@ -1139,7 +1141,7 @@ def _run_oracle40_side_check(
         "data_seed": data_seed,
         "model_seed": model_seed,
     }
-    _write_json(ROOT / "campaign_state_v2.json", ledger)
+    _write_json(CAMPAIGN_LEDGER, ledger)
     print(
         json.dumps(
             {
@@ -1311,9 +1313,9 @@ def run_reduced_campaign() -> dict[str, Any]:
     torch.set_num_threads(1)
     started_at = datetime.now(timezone.utc).isoformat()
     started = time.perf_counter()
-    ledger_path = ROOT / "campaign_state_v2.json"
+    ledger_path = CAMPAIGN_LEDGER
     manifest_hash = hashlib.sha256(
-        (ROOT / "freeze_manifest_v2.json").read_bytes()
+        FREEZE_MANIFEST.read_bytes()
     ).hexdigest()
     if ledger_path.exists():
         ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
