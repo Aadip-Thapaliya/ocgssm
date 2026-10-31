@@ -40,6 +40,13 @@ stages:
       oracle_iterated_zero_ssm: {direct_head_mode: iterated, zero_init_ssm_head: true}
       oracle_reachability_zero_ssm: {direct_head_mode: reachability, zero_init_ssm_head: true}
     success: Primary gate as S1 (<= 1.05 at H1/H2). S1b target - selected variant clearly beats DirectVAR (paired 95% CI upper < 1) at both H1 and H2, matching oracle-support OLS. If not met, record and continue to S3 with iterated (the accepted S1 selection).
+  s3:
+    note: Convergence of the learned graph (soft EMA mask, iterated head) under a 40-epoch cap, patience 5, tune checkpoint; learned graph optimizer lr 0.01 as frozen in the D20 protocol. S2 mask choices are deferred.
+    training_overrides: {epoch_cap: 40}
+    variants:
+      learned_soft_iterated: {graph_mode: learned, direct_head_mode: iterated}
+    convergence_gate: PASS if the cap is reached on <= 1 of 3 seeds AND, on every seed, best tune MSE over epochs 1-40 improves on best tune MSE over epochs 1-20 by < 0.5% (relative). Validation curves are reported. Ratios to oracle_iterated, dense_iterated and DirectVAR (s1 runs, same seeds) are informative only, not S2 gates.
+    fallback: 60-epoch cap (CPU) once; Colab only with approval.
 selection: Choose the oracle variant with the lowest equal-seed tune MSE averaged over H1 and H2; the gate is evaluated only for that variant.
 gate:
   metric: equal-seed mean MSE of selected oracle variant / equal-seed mean MSE of DirectVAR on gate segment
