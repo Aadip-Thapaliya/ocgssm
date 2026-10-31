@@ -331,3 +331,15 @@ sequential only; the workstation reported 14 physical / 20 logical CPU
 processors and 3.9 GB free of 13.7 GB at measurement. No held-out run had
 started at this protocol freeze. Do not run the detector, real data, or
 Colab; no parallel processes are authorized.
+
+## Roadmap S1 - oracle direct-head masking at H2 (development only)
+
+Hypothesis: the oracle direct readout applied lag-k mask A_k at every horizon, but for K=2 the H2 coefficients are A1@A1+A2 on x[t] and A1@A2 on x[t-1]. Variants (identical 20-epoch cap, patience 5, best-checkpoint restore, also for DirectVAR) on pairs 67/1009, 71/1103, 73/1201; selection on tune 2400-2665; gate on validation 2933-3199 (equal-seed paired 12-window block bootstrap, 2000 resamples). No test or held-out data used.
+
+| Oracle head | H1 / DirectVAR [95% CI] | H2 / DirectVAR [95% CI] | H3 | H6 |
+|---|---|---|---:|---:|
+| lag (previous default) | 1.0275 [1.0187, 1.0366] | 1.1294 [1.1168, 1.1424] | 1.0585 | 1.0332 |
+| reachability (companion support) | 1.0285 [1.0198, 1.0371] | 1.0365 [1.0294, 1.0441] | 1.0402 | 1.0446 |
+| iterated (selected) | 1.0288 [1.0198, 1.0380] | 1.0333 [1.0260, 1.0413] | 1.0336 | 1.0295 |
+
+Result: S1 PASS (gate <= 1.05 at H1 and H2). The H2 over-restriction hypothesis is supported on development seeds: fixing horizon masks cut the H2 ratio from 1.129 to 1.033-1.037 without changing H1. The oracle remains ~3% worse than DirectVAR at H1/H2 (CIs exclude 1), and 6/9 oracle runs hit the 20-epoch cap, so convergence is still open (S3). Run time 18.2 min CPU. Artifacts: `results/roadmap/s1/s1/summary.md`, `summary.json`, `s1_ratios_curves.png`.
