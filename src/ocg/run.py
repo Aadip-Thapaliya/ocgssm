@@ -196,6 +196,8 @@ def _build_model(
             random_sparsity=random_sparsity,
             use_direct_lag_head=bool(config.get("use_direct_lag_head", True)),
             use_ssm_coupling=bool(config.get("use_ssm_coupling", True)),
+            direct_head_mode=str(config.get("direct_head_mode", "lag")),
+            zero_init_ssm_head=bool(config.get("zero_init_ssm_head", False)),
             graph_mask_threshold=(
                 float(config["graph_mask_threshold"])
                 if config.get("graph_mask_threshold") is not None

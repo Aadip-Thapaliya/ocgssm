@@ -232,3 +232,11 @@ results/d20_equal_training/**
 !results/d20_equal_training/freeze_manifest_v2.json
 !results/d20_equal_training/freeze_manifest_v3.json
 !results/d20_equal_training/freeze_manifest_v4.json
+
+!results/roadmap/
+results/roadmap/**
+!results/roadmap/*/
+!results/roadmap/*/protocol.yaml
+!results/roadmap/*/summary.md
+!results/roadmap/*/summary.json
+!results/roadmap/*/*.png

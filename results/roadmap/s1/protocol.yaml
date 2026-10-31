@@ -1,0 +1,55 @@
+protocol_version: 1
+stage: S1 H2 fix (roadmap); development seeds only; no test or held-out data read.
+hypothesis: Unproven - lag-k masks at every horizon over-restrict the oracle direct readout at H>=2. For K=2, H2 coefficients are A1@A1+A2 on x[t] and A1@A2 on x[t-1].
+data:
+  generator: generate_svar
+  steps: 4000
+  variables: 20
+  lags: 2
+  sparsity: 0.1
+  noise_scale: 0.1
+  cross_variable_scale: 1.0
+  switch_at: 3600
+  blend_steps: 0
+  input_length: 24
+  horizon: 6
+  raw_segments_used:
+    train: [0, 2399]
+    tune_checkpoint_and_selection: [2400, 2665]
+    gate: [2933, 3199]
+  note: Windows are built inside each segment, so every target index is <= 3199; test 3200-3999 is never windowed or scored.
+seeds:
+  development_pairs: [[67, 1009], [71, 1103], [73, 1201]]
+  seen_development_only_not_for_gates: [[11, 101], [17, 202], [23, 303], [31, 301], [37, 401], [43, 503], [47, 607]]
+  reserved_held_out_untouched: [[53, 709], [59, 811], [61, 913]]
+training:
+  learning_rate: 0.001
+  batch_size: 32
+  epoch_cap: 20
+  patience: 5
+  checkpoint: lowest tune MSE with best-state restore; identical for every variant including DirectVAR
+stages:
+  s1:
+    variants:
+      oracle_lag: {direct_head_mode: lag}
+      oracle_reachability: {direct_head_mode: reachability}
+      oracle_iterated: {direct_head_mode: iterated}
+selection: Choose the oracle variant with the lowest equal-seed tune MSE averaged over H1 and H2; the gate is evaluated only for that variant.
+gate:
+  metric: equal-seed mean MSE of selected oracle variant / equal-seed mean MSE of DirectVAR on gate segment
+  max_ratio: 1.05
+  horizons: [1, 2]
+  pass_rule: ratio <= 1.05 at both H1 and H2 (point gate); paired CI reported.
+statistics:
+  ci: equal-seed paired circular moving-block percentile bootstrap, 95%
+  block_length: 12
+  resamples: 2000
+fallbacks:
+  s1b: Selected mask mode with zero-initialized SSM head (masked VAR backbone + SSM residual); same training policy.
+  s1c: 40-60 epoch cap with cosine or plateau LR schedule chosen on tune MSE; DirectVAR receives identical budget and schedule.
+  f1: Record F1 and stop.
+  max_attempts_per_branch: 2
+budget:
+  stage_cap_minutes_cumulative: 120
+  max_run_seconds: 5100
+  rule: Abort and ask if projected run time after any seed exceeds max_run_seconds or projected cumulative stage time exceeds 120 minutes.

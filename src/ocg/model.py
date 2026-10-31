@@ -9,6 +9,34 @@ from ocg.graph import GraphLearner
 from ocg.ssm import CausalSSMLayer
 
 
+def companion_reachability(adjacency: Tensor, horizon: int) -> Tensor:
+    """Return Boolean (H,K,D,D) supports of VAR companion powers.
+
+    Entry [i,j] of lag block k means x_j[t+1-k] -> x_i (generator orientation).
+    For horizon h the mask on lag k is the support of block (0,k-1) of C^h with
+    C = [[A1, ..., AK], [I, 0, ...], ...]; for K=2, h=2 gives A1@A1+A2 and A1@A2.
+    """
+    if adjacency.ndim != 3 or adjacency.shape[1] != adjacency.shape[2]:
+        raise ValueError("adjacency must have shape (K,D,D)")
+    if horizon < 1:
+        raise ValueError("horizon must be positive")
+    n_lags, n_variables, _ = adjacency.shape
+    size = n_lags * n_variables
+    support = (adjacency.detach() > 0).to(torch.float64)
+    companion = torch.zeros(size, size, dtype=torch.float64, device=adjacency.device)
+    companion[:n_variables] = torch.cat(tuple(support), dim=1)
+    if n_lags > 1:
+        companion[n_variables:, : size - n_variables] = torch.eye(
+            size - n_variables, dtype=torch.float64, device=adjacency.device
+        )
+    power = torch.eye(size, dtype=torch.float64, device=adjacency.device)
+    masks = []
+    for _ in range(horizon):
+        power = ((power @ companion) > 0).to(torch.float64)
+        masks.append(power[:n_variables].reshape(n_variables, n_lags, n_variables).transpose(0, 1))
+    return torch.stack(masks).to(dtype=adjacency.dtype)
+
+
 class CausalSSM(nn.Module):
     """Forecast (B,L,D) windows as (B,H,D), with graph-masked lag input mixing."""
 
@@ -28,9 +56,15 @@ class CausalSSM(nn.Module):
         use_direct_lag_head: bool = True,
         use_ssm_coupling: bool = True,
         graph_mask_threshold: float | None = None,
+        direct_head_mode: str = "lag",
+        zero_init_ssm_head: bool = False,
     ) -> None:
         """Initialize the SSM stack, graph mode, and per-variable forecast head."""
         super().__init__()
+        if direct_head_mode not in {"lag", "reachability", "iterated"}:
+            raise ValueError("direct_head_mode must be lag, reachability, or iterated")
+        if direct_head_mode == "reachability" and graph_mode == "learned":
+            raise ValueError("reachability direct head is not implemented for learned graphs")
         if n_variables < 1 or state_dim < 1 or horizon < 1 or n_lags < 1 or n_layers < 1:
             raise ValueError("model dimensions must be positive")
         if graph_mode not in {"identity", "learned", "oracle", "random", "dense"}:
@@ -102,6 +136,10 @@ class CausalSSM(nn.Module):
             nn.LayerNorm(n_variables) for _ in range(n_layers - 1)
         )
         self.head = nn.Linear(state_dim, horizon)
+        self.direct_head_mode = direct_head_mode
+        if zero_init_ssm_head:
+            nn.init.zeros_(self.head.weight)
+            nn.init.zeros_(self.head.bias)
 
     def _lagged_adjacency(self, values: Tensor) -> Tensor:
         """Resolve mode into lag-specific (K,D,D) adjacency probabilities."""
@@ -145,6 +183,12 @@ class CausalSSM(nn.Module):
     def _direct_lag_forecast(self, values: Tensor) -> Tensor:
         """Project recent (B,L,D) values directly to graph-masked (B,H,D) forecasts."""
         adjacency = self._lagged_adjacency(values)
+        if self.direct_head_mode == "iterated":
+            return self._iterated_lag_forecast(values, adjacency)
+        if self.direct_head_mode == "reachability":
+            horizon_masks = companion_reachability(adjacency, self.horizon)
+        else:
+            horizon_masks = adjacency.unsqueeze(0).expand(self.horizon, -1, -1, -1)
         forecasts: list[Tensor] = []
         for horizon_index in range(self.horizon):
             forecast = values.new_zeros(values.shape[0], self.n_variables)
@@ -154,7 +198,7 @@ class CausalSSM(nn.Module):
                     continue
                 weights = (
                     self.lag_forecast_weights[horizon_index, lag_index]
-                    * adjacency[lag_index]
+                    * horizon_masks[horizon_index, lag_index]
                 )
                 forecast = forecast + torch.einsum(
                     "ij,bj->bi",
@@ -162,6 +206,21 @@ class CausalSSM(nn.Module):
                     values[:, -lag, :],
                 )
             forecasts.append(forecast)
+        return torch.stack(forecasts, dim=1)
+
+    def _iterated_lag_forecast(self, values: Tensor, adjacency: Tensor) -> Tensor:
+        """Roll the graph-masked horizon-1 lag readout forward recursively."""
+        history = [values[:, -lag, :] for lag in range(self.n_lags, 0, -1) if lag <= values.shape[1]]
+        forecasts: list[Tensor] = []
+        for _ in range(self.horizon):
+            forecast = values.new_zeros(values.shape[0], self.n_variables)
+            for lag_index in range(min(self.n_lags, len(history))):
+                weights = self.lag_forecast_weights[0, lag_index] * adjacency[lag_index]
+                forecast = forecast + torch.einsum(
+                    "ij,bj->bi", weights, history[-(lag_index + 1)]
+                )
+            forecasts.append(forecast)
+            history.append(forecast)
         return torch.stack(forecasts, dim=1)
 
     def _adjacency(self, values: Tensor) -> Tensor:
