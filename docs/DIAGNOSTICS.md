@@ -343,3 +343,6 @@ Hypothesis: the oracle direct readout applied lag-k mask A_k at every horizon, b
 | iterated (selected) | 1.0288 [1.0198, 1.0380] | 1.0333 [1.0260, 1.0413] | 1.0336 | 1.0295 |
 
 Result: S1 PASS (gate <= 1.05 at H1 and H2). The H2 over-restriction hypothesis is supported on development seeds: fixing horizon masks cut the H2 ratio from 1.129 to 1.033-1.037 without changing H1. The oracle remains ~3% worse than DirectVAR at H1/H2 (CIs exclude 1), and 6/9 oracle runs hit the 20-epoch cap, so convergence is still open (S3). Run time 18.2 min CPU. Artifacts: `results/roadmap/s1/s1/summary.md`, `summary.json`, `s1_ratios_curves.png`.
+
+### S1 diagnostics decision rule (frozen before running, user-directed)
+On dev pairs 67/1009, 71/1103, 73/1201 and validation slice 2933-3199 only: report oracle_iterated vs identity/dense (both with the iterated head, S1 training policy), oracle-support OLS (train-only lstsq/gelsd on [x_t, x_(t-1), 1] restricted to true companion reachability support) vs DirectVAR and identity, reachability densities, and oracle_iterated with a 40-epoch cap on 67/1009. "Clearly beats" = paired 95% block-bootstrap CI upper bound of the MSE ratio < 1 at that horizon. Go to S1b if, at H1 or H2, OLS clearly beats DirectVAR while oracle_iterated does not; otherwise go to S3. Iterated remains the accepted S1 selection.

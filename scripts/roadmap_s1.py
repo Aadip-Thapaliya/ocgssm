@@ -77,7 +77,7 @@ def _build(variant: str, spec: dict[str, Any], model_seed: int, graph0: torch.Te
     else:
         config = {
             "id": variant, "name": "ocg", "input_length": 24, "state_dim": 8,
-            "n_layers": 1, "embedding_dim": 4, "graph_mode": "oracle",
+            "n_layers": 1, "embedding_dim": 4, "graph_mode": spec.get("graph_mode", "oracle"),
             "graph": _graph_config(0.01),
             "direct_head_mode": spec["direct_head_mode"],
             "zero_init_ssm_head": bool(spec.get("zero_init_ssm_head", False)),
@@ -85,7 +85,8 @@ def _build(variant: str, spec: dict[str, Any], model_seed: int, graph0: torch.Te
     torch.manual_seed(model_seed)
     return _build_model(
         config, n_variables=20, horizon=6, n_lags=2,
-        true_graph=graph0.unsqueeze(0), seed=model_seed, random_sparsity=0.1,
+        true_graph=graph0.unsqueeze(0) if config.get("graph_mode", "oracle") == "oracle" else None,
+        seed=model_seed, random_sparsity=0.1,
     )
 
 
@@ -98,7 +99,7 @@ def _run_one(stage: str, variant: str, spec: dict[str, Any], pair: tuple[int, in
     train_x, train_y, train_g = data["train"]
     tune_x, tune_y, tune_g = data["tune"]
     gate_x, gate_y, _ = data["gate"]
-    oracle = variant != "var_direct"
+    oracle = variant != "var_direct" and spec.get("graph_mode", "oracle") == "oracle"
     started = time.perf_counter()
     result = train_offline(
         model, train_x, train_y,
