@@ -1,0 +1,289 @@
+{
+  "stage": "s1b",
+  "selection_by_tune_mean_H1_H2_mse": {
+    "oracle_iterated_zero_ssm": 0.011078341078614414,
+    "oracle_reachability_zero_ssm": 0.011114720774339
+  },
+  "selected_variant": "oracle_iterated_zero_ssm",
+  "ratios_vs_var_direct": {
+    "oracle_iterated_zero_ssm": [
+      {
+        "horizon": 1,
+        "ratio": 1.0281621211880296,
+        "ci95": [
+          1.0196547053993117,
+          1.036681500119122
+        ],
+        "per_seed": [
+          1.0222894991748834,
+          1.0230678664589345,
+          1.0390331163297293
+        ]
+      },
+      {
+        "horizon": 2,
+        "ratio": 1.0326598380899277,
+        "ci95": [
+          1.0255626715614963,
+          1.040312590581685
+        ],
+        "per_seed": [
+          1.0254190156162952,
+          1.0301605934737523,
+          1.04234257158983
+        ]
+      },
+      {
+        "horizon": 3,
+        "ratio": 1.0332792180960833,
+        "ci95": [
+          1.0253126176424512,
+          1.0412670197791583
+        ],
+        "per_seed": [
+          1.0270596043339992,
+          1.0380274800674087,
+          1.0349126100227477
+        ]
+      },
+      {
+        "horizon": 4,
+        "ratio": 1.028757393222897,
+        "ci95": [
+          1.0210843066210844,
+          1.036545483027966
+        ],
+        "per_seed": [
+          1.0210994065039227,
+          1.034500139339604,
+          1.030817630910946
+        ]
+      },
+      {
+        "horizon": 5,
+        "ratio": 1.0302878888254108,
+        "ci95": [
+          1.0218297531764313,
+          1.0377822143358324
+        ],
+        "per_seed": [
+          1.022102599581573,
+          1.0344047533038108,
+          1.0344571758206678
+        ]
+      },
+      {
+        "horizon": 6,
+        "ratio": 1.028698272501748,
+        "ci95": [
+          1.0216214550615677,
+          1.036214305941177
+        ],
+        "per_seed": [
+          1.0185408999926473,
+          1.0332731216369957,
+          1.0344809669560118
+        ]
+      }
+    ],
+    "oracle_reachability_zero_ssm": [
+      {
+        "horizon": 1,
+        "ratio": 1.030727909881437,
+        "ci95": [
+          1.0229309435384366,
+          1.0385076432920637
+        ],
+        "per_seed": [
+          1.0267819471522426,
+          1.0262658993512273,
+          1.0390752021714664
+        ]
+      },
+      {
+        "horizon": 2,
+        "ratio": 1.0367608798635999,
+        "ci95": [
+          1.0298652697172161,
+          1.044146896746493
+        ],
+        "per_seed": [
+          1.0294256406091864,
+          1.0361926917573194,
+          1.044628033095469
+        ]
+      },
+      {
+        "horizon": 3,
+        "ratio": 1.0384729775765624,
+        "ci95": [
+          1.0309991860093137,
+          1.0458046075520768
+        ],
+        "per_seed": [
+          1.0342990181411056,
+          1.0416030690183025,
+          1.039624106107012
+        ]
+      },
+      {
+        "horizon": 4,
+        "ratio": 1.040223938412369,
+        "ci95": [
+          1.033538745370844,
+          1.0469795324003976
+        ],
+        "per_seed": [
+          1.0307079791826683,
+          1.0445544633509416,
+          1.0455151406746028
+        ]
+      },
+      {
+        "horizon": 5,
+        "ratio": 1.0438789131444688,
+        "ci95": [
+          1.0363035151896152,
+          1.0512544001312365
+        ],
+        "per_seed": [
+          1.0352761582162717,
+          1.0503784274717163,
+          1.0461431191397366
+        ]
+      },
+      {
+        "horizon": 6,
+        "ratio": 1.0422405128938985,
+        "ci95": [
+          1.035286392489824,
+          1.0496107286811118
+        ],
+        "per_seed": [
+          1.0378958531051894,
+          1.0468718494516416,
+          1.0421140648262162
+        ]
+      }
+    ]
+  },
+  "gate": {
+    "H1": true,
+    "H2": true
+  },
+  "clearly_beats_var_direct": {
+    "H1": false,
+    "H2": false
+  },
+  "passed": true,
+  "training": {
+    "oracle_iterated_zero_ssm": [
+      {
+        "pair": [
+          67,
+          1009
+        ],
+        "elapsed_seconds": 76.00608180009294,
+        "epochs_executed": 13,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 8,
+        "best_validation_mse": 0.012564715929329395
+      },
+      {
+        "pair": [
+          71,
+          1103
+        ],
+        "elapsed_seconds": 103.9074598000152,
+        "epochs_executed": 12,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 7,
+        "best_validation_mse": 0.01177379209548235
+      },
+      {
+        "pair": [
+          73,
+          1201
+        ],
+        "elapsed_seconds": 110.19858179998118,
+        "epochs_executed": 17,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 12,
+        "best_validation_mse": 0.012180284596979618
+      }
+    ],
+    "oracle_reachability_zero_ssm": [
+      {
+        "pair": [
+          67,
+          1009
+        ],
+        "elapsed_seconds": 87.97216120001394,
+        "epochs_executed": 11,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 6,
+        "best_validation_mse": 0.012705609202384949
+      },
+      {
+        "pair": [
+          71,
+          1103
+        ],
+        "elapsed_seconds": 94.096490399912,
+        "epochs_executed": 11,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 6,
+        "best_validation_mse": 0.011875844560563564
+      },
+      {
+        "pair": [
+          73,
+          1201
+        ],
+        "elapsed_seconds": 98.54597980005201,
+        "epochs_executed": 12,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 7,
+        "best_validation_mse": 0.012277591042220592
+      }
+    ],
+    "var_direct": [
+      {
+        "pair": [
+          67,
+          1009
+        ],
+        "elapsed_seconds": 1.697266299976036,
+        "epochs_executed": 10,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 5,
+        "best_validation_mse": 0.01225567888468504
+      },
+      {
+        "pair": [
+          71,
+          1103
+        ],
+        "elapsed_seconds": 1.8936479999683797,
+        "epochs_executed": 9,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 4,
+        "best_validation_mse": 0.011496820487082005
+      },
+      {
+        "pair": [
+          73,
+          1201
+        ],
+        "elapsed_seconds": 2.4253516000462696,
+        "epochs_executed": 12,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 7,
+        "best_validation_mse": 0.011788933537900448
+      }
+    ]
+  },
+  "run_seconds": 576.743020700058,
+  "protocol_commit": "bc0d2df52c38b75c8b699c61830507528bca1e58",
+  "wall_seconds_this_invocation": 586.4848094999325
+}

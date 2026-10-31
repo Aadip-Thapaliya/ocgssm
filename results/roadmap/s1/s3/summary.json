@@ -1,0 +1,173 @@
+{
+  "stage": "s3",
+  "selection_by_tune_mean_H1_H2_mse": {
+    "learned_soft_iterated": 0.011123624498957214
+  },
+  "selected_variant": "learned_soft_iterated",
+  "ratios_vs_var_direct": {
+    "learned_soft_iterated": [
+      {
+        "horizon": 1,
+        "ratio": 1.0348637108726346,
+        "ci95": [
+          1.026918114142378,
+          1.0427866479354369
+        ],
+        "per_seed": [
+          1.0266380545280436,
+          1.0321439735630626,
+          1.045658893030679
+        ]
+      },
+      {
+        "horizon": 2,
+        "ratio": 1.0355943597133073,
+        "ci95": [
+          1.0284353696072355,
+          1.0433185482867406
+        ],
+        "per_seed": [
+          1.0267138464376653,
+          1.0351768046121803,
+          1.0448515144148907
+        ]
+      },
+      {
+        "horizon": 3,
+        "ratio": 1.0340185439402214,
+        "ci95": [
+          1.0265427502025148,
+          1.0414700083976884
+        ],
+        "per_seed": [
+          1.027400364045426,
+          1.0371306448273663,
+          1.0376460349672054
+        ]
+      },
+      {
+        "horizon": 4,
+        "ratio": 1.0298986406753037,
+        "ci95": [
+          1.0226765861198928,
+          1.0374048644911853
+        ],
+        "per_seed": [
+          1.0214705180324068,
+          1.035307814463487,
+          1.0330530042182862
+        ]
+      },
+      {
+        "horizon": 5,
+        "ratio": 1.030968269783963,
+        "ci95": [
+          1.0226443214813514,
+          1.0381949962276555
+        ],
+        "per_seed": [
+          1.0230413369049636,
+          1.0349297383387992,
+          1.0350307689206162
+        ]
+      },
+      {
+        "horizon": 6,
+        "ratio": 1.029754660646787,
+        "ci95": [
+          1.0227042946248373,
+          1.0372450227241987
+        ],
+        "per_seed": [
+          1.020412700308312,
+          1.0340206851170837,
+          1.035016328383157
+        ]
+      }
+    ]
+  },
+  "gate": {
+    "H1": true,
+    "H2": true
+  },
+  "clearly_beats_var_direct": {
+    "H1": false,
+    "H2": false
+  },
+  "passed": true,
+  "training": {
+    "learned_soft_iterated": [
+      {
+        "pair": [
+          67,
+          1009
+        ],
+        "elapsed_seconds": 234.70290740008932,
+        "epochs_executed": 38,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 33,
+        "best_validation_mse": 0.01258630771189928
+      },
+      {
+        "pair": [
+          71,
+          1103
+        ],
+        "elapsed_seconds": 241.20352480001748,
+        "epochs_executed": 39,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 34,
+        "best_validation_mse": 0.011807868257164955
+      },
+      {
+        "pair": [
+          73,
+          1201
+        ],
+        "elapsed_seconds": 228.2980958999833,
+        "epochs_executed": 37,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 32,
+        "best_validation_mse": 0.012204471044242382
+      }
+    ],
+    "var_direct": [
+      {
+        "pair": [
+          67,
+          1009
+        ],
+        "elapsed_seconds": 1.5256298000458628,
+        "epochs_executed": 10,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 5,
+        "best_validation_mse": 0.01225567888468504
+      },
+      {
+        "pair": [
+          71,
+          1103
+        ],
+        "elapsed_seconds": 1.3598450999706984,
+        "epochs_executed": 9,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 4,
+        "best_validation_mse": 0.011496820487082005
+      },
+      {
+        "pair": [
+          73,
+          1201
+        ],
+        "elapsed_seconds": 1.8174516999861225,
+        "epochs_executed": 12,
+        "reached_epoch_cap": false,
+        "best_validation_epoch": 7,
+        "best_validation_mse": 0.011788933537900448
+      }
+    ]
+  },
+  "run_seconds": 708.9074547000928,
+  "protocol_commit": "882ea09277212020fac9e3d8646775e8a89e800e",
+  "wall_seconds_this_invocation": 718.8592666999903
+}

@@ -244,3 +244,6 @@ results/roadmap/**
 !results/roadmap/*/*/summary.md
 !results/roadmap/*/*/summary.json
 !results/roadmap/*/*/*.png
+!results/roadmap/*/*/convergence.md
+!results/roadmap/*/*/convergence.json
+!results/roadmap/*/*/s1_diagnostics.*
