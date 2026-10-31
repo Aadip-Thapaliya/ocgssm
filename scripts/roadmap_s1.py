@@ -186,6 +186,7 @@ def _summarize(stage: str, records: dict[str, list[dict[str, Any]]],
         "selected_variant": selected,
         "ratios_vs_var_direct": table,
         "gate": {f"H{r['horizon']}": r["ratio"] <= limit for r in gate_rows},
+        "clearly_beats_var_direct": {f"H{r['horizon']}": r["ci95"][1] < 1.0 for r in gate_rows},
         "passed": all(r["ratio"] <= limit for r in gate_rows),
         "training": {
             v: [{k: r[k] for k in ("pair", "elapsed_seconds", "epochs_executed",
@@ -237,7 +238,8 @@ def _write_report(stage: str, summary: dict[str, Any], records: dict[str, list[d
     lines = [f"# Roadmap {stage} (development only)", "",
              f"Selected on tune 2400-2665 (mean H1/H2 MSE): **{summary['selected_variant']}**. "
              f"Gate (validation 2933-3199): oracle/DirectVAR <= 1.05 at H1 and H2 -> "
-             f"**{'PASS' if summary['passed'] else 'FAIL'}**. Run time "
+             f"**{'PASS' if summary['passed'] else 'FAIL'}**. Clearly beats DirectVAR (CI upper < 1): "
+             f"{summary['clearly_beats_var_direct']}. Run time "
              f"{summary['run_seconds'] / 60:.1f} min.", "",
              "| Variant | H1 ratio [95% CI] | H2 ratio [95% CI] | H3 | H6 |", "|---|---|---|---:|---:|"]
     for v in candidates:

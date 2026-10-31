@@ -34,6 +34,12 @@ stages:
       oracle_lag: {direct_head_mode: lag}
       oracle_reachability: {direct_head_mode: reachability}
       oracle_iterated: {direct_head_mode: iterated}
+  s1b:
+    note: Triggered by the frozen S1 diagnostics rule. Masked VAR backbone with zero-initialized SSM head (model starts as the masked VAR, SSM learns a residual). Two attempts in one frozen run, selected on tune; DirectVAR reused from s1 (same seeds and policy).
+    variants:
+      oracle_iterated_zero_ssm: {direct_head_mode: iterated, zero_init_ssm_head: true}
+      oracle_reachability_zero_ssm: {direct_head_mode: reachability, zero_init_ssm_head: true}
+    success: Primary gate as S1 (<= 1.05 at H1/H2). S1b target - selected variant clearly beats DirectVAR (paired 95% CI upper < 1) at both H1 and H2, matching oracle-support OLS. If not met, record and continue to S3 with iterated (the accepted S1 selection).
 selection: Choose the oracle variant with the lowest equal-seed tune MSE averaged over H1 and H2; the gate is evaluated only for that variant.
 gate:
   metric: equal-seed mean MSE of selected oracle variant / equal-seed mean MSE of DirectVAR on gate segment
