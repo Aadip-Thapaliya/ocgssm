@@ -247,3 +247,10 @@ results/roadmap/**
 !results/roadmap/*/*/convergence.md
 !results/roadmap/*/*/convergence.json
 !results/roadmap/*/*/s1_diagnostics.*
+!results/roadmap/*/*/gates.yaml
+!results/roadmap/*/*/*.md
+!results/roadmap/*/*/*.json
+!results/roadmap/*/*/*/
+!results/roadmap/*/*/*/summary.*
+!results/roadmap/*/*/*/*.png
+!results/roadmap/*/*/*/selection.json

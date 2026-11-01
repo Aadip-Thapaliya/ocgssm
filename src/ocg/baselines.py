@@ -88,16 +88,19 @@ class RevINLinear(nn.Module):
 class DirectVAR(nn.Module):
     """Direct multi-horizon VAR head from the most recent lagged observations."""
 
-    def __init__(self, n_lags: int, horizon: int, n_variables: int) -> None:
-        """Initialize a dense lag-to-horizon linear map."""
+    def __init__(
+        self, n_lags: int, horizon: int, n_variables: int, iterated: bool = False
+    ) -> None:
+        """Initialize a dense lag-to-horizon map, or a one-step map rolled forward."""
         super().__init__()
         if n_lags < 1 or horizon < 1 or n_variables < 1:
             raise ValueError("model dimensions must be positive")
         self.n_lags = n_lags
         self.horizon = horizon
         self.n_variables = n_variables
+        self.iterated = iterated
         self.projection = nn.Linear(
-            n_lags * n_variables, horizon * n_variables
+            n_lags * n_variables, (1 if iterated else horizon) * n_variables
         )
         nn.init.zeros_(self.projection.weight)
         nn.init.zeros_(self.projection.bias)
@@ -110,6 +113,14 @@ class DirectVAR(nn.Module):
             or values.shape[-1] != self.n_variables
         ):
             raise ValueError("values must contain the configured lagged variables")
+        if self.iterated:
+            history = [values[:, -lag, :] for lag in range(self.n_lags, 0, -1)]
+            forecasts = []
+            for _ in range(self.horizon):
+                step = self.projection(torch.cat(history[::-1][: self.n_lags], dim=-1))
+                forecasts.append(step)
+                history.append(step)
+            return torch.stack(forecasts, dim=1)
         lagged = torch.cat(
             [values[:, -lag, :] for lag in range(1, self.n_lags + 1)],
             dim=-1,

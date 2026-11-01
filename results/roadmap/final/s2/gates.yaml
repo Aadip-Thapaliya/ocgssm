@@ -1,0 +1,25 @@
+﻿stage: S2 formal (development seeds 67/1009, 71/1103, 73/1201; validation only)
+mission_record: docs/MISSION_FINAL.md
+data: D20 K2 SVAR, steps 4000, switch 3600, sparsity 0.1, noise 0.1; train 0-2399, tune 2400-2665 (checkpoint and all selection), gate 2933-3199. No target index > 3199 is read (asserted).
+training: {learning_rate: 0.001, batch_size: 32, epoch_cap: 40, patience: 5, checkpoint: best tune MSE restored, graph_lr: 0.01, sparsity_weight: 0.001, threads: 1}
+head: every SSM variant uses the iterated head (S1 selection).
+baselines:
+  var_direct: unchanged DirectVAR (direct multi-horizon linear head, raw scale, intercept); the baseline identity of S1 is preserved. Retrained here under the cap-40 policy (S1 cached cap-20 runs are not reused).
+  var_iterated: NEW named baseline, DirectVAR one-step map rolled forward (mission says DirectVAR uses the iterated head; disclosed as a separate variant so var_direct keeps its identity).
+variants:
+  identity: graph_mode identity
+  dense: graph_mode dense
+  random: random fixed mask, per-lag edge count = round(p*D^2) with p = per-seed true-graph density (both lags pooled), i.e. density-matched to oracle
+  learned_soft: learned EMA soft mask
+  learned_hard: thresholds {0.3,0.4,0.5,0.6,0.7} applied to the trained learned_soft EMA adjacency; choose the threshold minimizing tune-slice MSE (mean over H1-H6) of the trained soft model with that hard mask (ties -> higher threshold); then retrain from scratch with the selected mask fixed, same policy and seed
+  oracle: true graph
+reuse: none; all runs fresh (learned_soft also reproduces S3 as a determinism check).
+final_learned: learned_soft. learned_hard would be final only if learned_hard/learned_soft CI upper < 1 at H1 and H2 AND an online hysteresis refit rule is implemented and tested; no such rule is implemented, so the default (soft) is frozen.
+gate (gate slice 2933-3199, final learned variant):
+  - learned/oracle <= 1.05 at H1 and H2 (point ratio)
+  - learned/dense paired 95% CI upper < 1 at H1 and H2
+  - learned/random paired 95% CI upper < 1 at H1
+statistics: ratio of equal-seed mean MSEs; paired circular block bootstrap, 12-window blocks, 2000 resamples, seeds 700000+h.
+fallback: on failure, ONE attempt - sparsity-weight sweep over [0.0001, 0.01, 0.1] (learned_soft and learned_hard retrained, all other variants retrained identically per sub-run), select the weight by tune MSE of learned_soft (mean H1-H6); evaluate the same gate once for the selected weight. If it fails, record F2 and continue.
+fallback_sparsity_weights: [0.0001, 0.01, 0.1]
+budget: <= 60 min of stage compute.

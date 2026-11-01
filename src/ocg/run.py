@@ -135,6 +135,8 @@ def _build_model(
         return RevINLinear(int(config["input_length"]), horizon, n_variables)
     if name == "var_direct":
         return DirectVAR(n_lags, horizon, n_variables)
+    if name == "var_iterated":
+        return DirectVAR(n_lags, horizon, n_variables, iterated=True)
     if name == "transformer_lite":
         return TransformerLite(
             int(config["input_length"]),

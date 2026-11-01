@@ -1,0 +1,8 @@
+﻿stage: S2d scarcity sweep (development seeds, validation gate slice 2933-3199)
+configs: [D20_T600, D20_T1200, D20_T2400 (reuses S2 runs - identical spec/policy), D10_T2400, D40_T2400]
+train_slice: the last T steps before 2400 (2400-T .. 2399); tune 2400-2665 and gate 2933-3199 unchanged; data generator identical apart from D.
+variants: identity, dense, learned (soft, iterated, default sparsity), oracle, var_direct; training policy as S2.
+d40_rule: D40 runs last; if any single D40 run takes > 600 s, remaining D40 runs are skipped and D40 is reported as skipped.
+report: learned/dense and oracle/dense at H1/H2 with paired 95% CIs (12-window blocks, 2000 resamples).
+s4_hard_rule: among configs other than the default D20_T2400, choose the one with the lowest learned/dense point ratio at H1 such that learned/dense CI upper < 1 at H1 AND oracle/dense CI upper < 1 at H1. If none qualifies, S4-hard is skipped. S4-hard is secondary evidence only.
+budget: <= 60 min of stage compute.
