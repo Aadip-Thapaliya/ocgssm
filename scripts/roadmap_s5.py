@@ -124,7 +124,18 @@ def run_online(variant: str, pair: tuple[int, int], data: dict[str, Any], state_
 
 def _graph_timeline(history: torch.Tensor, truth: torch.Tensor) -> dict[str, list]:
     rows = [graph_metrics(history[i], truth[i]) for i in range(len(history))]
-    return {k: [r[k] for r in rows] for k in ("f1", "auroc", "shd")}
+    out = {k: [r[k] for r in rows] for k in ("f1", "auroc", "shd")}
+    # Reporting-only: F1 of the top-|E| edges (|E| = true edge count), since soft
+    # adjacency probabilities can stay below the fixed 0.5 threshold.
+    topk = []
+    for i in range(len(history)):
+        n_true = int(truth[i].sum())
+        pred = torch.zeros_like(truth[i]).reshape(-1)
+        pred[torch.topk(history[i].reshape(-1), n_true).indices] = 1.0
+        tp = float((pred * truth[i].reshape(-1)).sum())
+        topk.append(tp / n_true if n_true else 0.0)
+    out["f1_topk"] = topk
+    return out
 
 
 def pretrain(pair: tuple[int, int], data: dict[str, Any], base_dir: Path) -> dict[str, Any]:
@@ -227,6 +238,11 @@ def summarize(phase: str, pairs: list[tuple[int, int]], commit: str) -> dict[str
                     "post200_f1_mean": float(np.mean(tl["f1"][post_slice])),
                     "final_f1": tl["f1"][-1], "final_auroc": tl["auroc"][-1],
                     "final_shd": tl["shd"][-1],
+                    "pre_switch_f1_topk": (float(np.mean(tl["f1_topk"][:DETECT_INDEX]))
+                                           if "f1_topk" in tl else None),
+                    "post200_f1_topk": (float(np.mean(tl["f1_topk"][post_slice]))
+                                        if "f1_topk" in tl else None),
+                    "final_f1_topk": tl["f1_topk"][-1] if "f1_topk" in tl else None,
                     "shd_recovery_windows": recovery_time(tl["shd"], DETECT_INDEX)})
         if n == "learned_frozen":
             per_variant[n]["best_epochs"] = [r["best_validation_epoch"] for r in rs]
@@ -254,11 +270,13 @@ def _report(phase: str, s: dict[str, Any], records: dict[str, list[dict[str, Any
            ylabel="prequential MSE (15-window smooth, seed mean)", title=f"S5 {phase}")
     a1.legend(fontsize=7)
     for n in ("learned_det_off", "learned_det_on"):
-        f1 = np.mean([r["graph_timeline"]["f1"] for r in records[n]], axis=0)
-        a2.plot(np.arange(len(f1)) - DETECT_INDEX, f1, label=n)
+        key = "f1_topk" if "f1_topk" in records[n][0]["graph_timeline"] else "auroc"
+        f1 = np.mean([[np.nan if v is None else v for v in r["graph_timeline"][key]]
+                      for r in records[n]], axis=0)
+        a2.plot(np.arange(len(f1)) - DETECT_INDEX, f1, label=f"{n} ({key})")
     a2.axvline(0, color="black", lw=0.8)
-    a2.set(xlabel="windows since switch enters input", ylabel="graph F1 (threshold 0.5)",
-           title="pre-update graph snapshot F1")
+    a2.set(xlabel="windows since switch enters input", ylabel="graph recovery vs current true graph",
+           title="pre-update graph snapshot (top-|E| F1 or AUROC)")
     a2.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(ROOT / phase / "s5_post_switch.png", dpi=120)
@@ -284,6 +302,7 @@ def _report(phase: str, s: dict[str, Any], records: dict[str, list[dict[str, Any
             f"FA={d['false_alarms_pre_switch']} hit={d['detected_within_200']} delay={d['delay_windows']}"
             for d in v[n]["detector"]), "", f"{n}: graph " + "; ".join(
             f"preF1={g['pre_switch_f1']:.3f} post200F1={g['post200_f1_mean']:.3f} finalF1={g['final_f1']:.3f} "
+            f"topkF1 pre/post200/final={g['pre_switch_f1_topk']}/{g['post200_f1_topk']}/{g['final_f1_topk']} "
             f"AUROC={g['final_auroc']:.3f} SHD={g['final_shd']} rec={g['shd_recovery_windows']}"
             for g in v[n]["graph"])]
     (ROOT / phase / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
