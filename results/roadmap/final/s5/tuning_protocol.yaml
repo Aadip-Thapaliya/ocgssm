@@ -1,0 +1,22 @@
+stage: S5-tuning
+purpose: dev-seed-only selection of the online adaptation configuration (no held-out data)
+dev_pairs: [[67, 1009], [71, 1103], [73, 1201]]
+data: {variables: 10, lags: 2, steps: 3000, switch_at: 2500, sparsity: 0.2, noise_scale: 0.1, cross_variable_scale: 1.5, input_length: 24, horizon: 6}
+data_disclosure: sparsity 0.2 / cross-scale 1.5 follow the earlier synthetic_abrupt_warm_cross15 setting; the mission fixes only D, K, the switch time and the slices.
+slices: {train: [0, 1599], validation: [1600, 1999], stream: [2000, 2999]}
+pretraining: iterated head, lr 0.001, batch 32, cap 40, patience 5, restore validation checkpoint; pre-switch data only; variants identity, dense, random (density = true pre-switch graph density), learned (ema 0.95), oracle
+online: train_online prequential with delayed labels (window j horizon h is used for an update only after its target is observed), forecast lr 0.001, timestamped pre-update graph snapshots; boost_steps 20, confirm_steps 2, rearm_steps 10
+learned_frozen: pretrained learned model, batch predictions on the stream, no forecast or graph updates
+detector_off: online forecast and graph updates with detector threshold = inf (no boost)
+detector_protocol: frozen threshold = max(configured, validation max robust z + 0.25); robust median/MAD from structural scores of a probe copy on validation windows (no detector-statistic updates); detector statistics frozen during the stream
+grid:
+  - {ema_decay: 0.9, threshold: 3.5, boost: 3.0}
+  - {ema_decay: 0.9, threshold: 5.0, boost: 3.0}
+  - {ema_decay: 0.95, threshold: 3.5, boost: 3.0}
+  - {ema_decay: 0.95, threshold: 5.0, boost: 3.0}
+  - {ema_decay: 0.98, threshold: 3.5, boost: 3.0}
+  - {ema_decay: 0.98, threshold: 5.0, boost: 3.0}
+  - {ema_decay: 0.95, threshold: 3.5, boost: 5.0}
+  - {ema_decay: 0.95, threshold: 5.0, boost: 5.0}
+selection: lowest equal-seed mean of learned_det_on MSE over the first 200 post-switch windows (window is post-switch when its first target index >= 2500) on dev streams; ties -> lower grid index
+primary_metric: mean per-window MSE (over H=6 and D=10) over stream windows 476-675

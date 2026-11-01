@@ -254,3 +254,7 @@ results/roadmap/**
 !results/roadmap/*/*/*/summary.*
 !results/roadmap/*/*/*/*.png
 !results/roadmap/*/*/*/selection.json
+!results/roadmap/*/*/*.yaml
+!results/roadmap/*/*/*/*/
+!results/roadmap/*/*/*/*/*.png
+!results/roadmap/*/*/*/persistence.json

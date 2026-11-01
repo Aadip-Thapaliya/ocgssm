@@ -57,3 +57,32 @@ def test_fixed_mask_and_random_density_builds():
     assert torch.equal(model.fixed_graph, mask)
     rnd = rf.build({"graph_mode": "random", "random_density": 0.2}, 5, 1, graph0)
     assert int(rnd.fixed_graph[0].sum()) == 5
+
+
+def test_s5_windows_and_guards():
+    from scripts import roadmap_s5 as s5
+    with pytest.raises(RuntimeError, match="LEAKAGE GUARD"):
+        s5.s5_data((79, 1301))
+    data = s5.s5_data((67, 1009))
+    sx, sy, sg = data["stream"]
+    assert len(sx) == 971
+    first_post_target = data["stream_target_start"] + s5.FIRST_POST
+    assert first_post_target == s5.SWITCH
+    assert data["stream_target_start"] + s5.LAST_PRE + 5 == s5.SWITCH - 1
+    assert torch.equal(sg[s5.DETECT_INDEX - 1], data["graph0"])
+    assert torch.equal(sg[s5.DETECT_INDEX], data["graph1"])
+    assert data["tune_target_start"] + len(data["tune"][0]) - 1 + 5 == 1999
+
+
+def test_s6_split_and_train_only_standardization():
+    from pathlib import Path
+    from scripts import roadmap_s6 as s6
+    if not (Path("data") / "ETTh1.csv").exists():
+        pytest.skip("ETTh1.csv not downloaded")
+    d = s6.ett_data("ETTh1", 24)
+    assert d["train_target_range"][1] < s6.TRAIN_END
+    assert d["val_target_range"] == [s6.TRAIN_END, s6.VAL_END - 1]
+    assert d["test_target_range"] == [s6.VAL_END, s6.TEST_END - 1]
+    raw = s6.load_csv(Path("data") / "ETTh1.csv", s6.COLUMNS)[: s6.TRAIN_END]
+    assert torch.allclose(torch.tensor(d["mean"]), raw.float().mean(dim=0))
+    assert d["test"][0].shape[0] == s6.TEST_END - s6.VAL_END - 24 + 1
