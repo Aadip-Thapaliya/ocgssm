@@ -258,3 +258,4 @@ results/roadmap/**
 !results/roadmap/*/*/*/*/
 !results/roadmap/*/*/*/*/*.png
 !results/roadmap/*/*/*/persistence.json
+!results/roadmap/*/*/*/*/persistence.json

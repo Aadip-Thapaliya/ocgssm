@@ -136,7 +136,8 @@ def diverged(record: dict[str, Any], persistence: float) -> bool:
     return (not all(np.isfinite(curve))) or record["best_validation_mse"] > persistence
 
 
-def run_job(dataset: str, horizon: int, seeds: list[int], gates: dict[str, Any]) -> None:
+def run_job(dataset: str, horizon: int, seeds: list[int], gates: dict[str, Any],
+            force_lag: bool = False) -> None:
     data = ett_data(dataset, horizon, int(gates["training"]["train_stride"]))
     data["_test_authorized"] = True
     training = gates["training"]
@@ -150,7 +151,7 @@ def run_job(dataset: str, horizon: int, seeds: list[int], gates: dict[str, Any])
         variants = [("identity", {"graph_mode": "identity"}), ("dense", {"graph_mode": "dense"}),
                     ("random", {"graph_mode": "random", "random_density": density}),
                     ("var_direct", {"model": "var_direct"}), ("dlinear", {"model": "dlinear"})]
-        if diverged(learned, persistence):
+        if force_lag or diverged(learned, persistence):
             variants.append(("learned_lag", {"graph_mode": "learned", "direct_head_mode": "lag"}))
         for name, spec in variants:
             train_eval(d / f"{name}.json", spec, data, horizon, seed, training)
@@ -283,6 +284,8 @@ def main() -> None:
     parser.add_argument("--dataset", default="ETTh1")
     parser.add_argument("--horizon", type=int, default=24)
     parser.add_argument("--summarize", action="store_true")
+    parser.add_argument("--seeds", default=None)
+    parser.add_argument("--force-lag", action="store_true")
     args = parser.parse_args()
     torch.set_num_threads(1)
     gates = yaml.safe_load(GATES.read_text(encoding="utf-8"))
@@ -290,7 +293,8 @@ def main() -> None:
     if args.summarize:
         summarize(gates["datasets"], gates["horizons"], commit)
         return
-    run_job(args.dataset, args.horizon, list(gates["seeds"]), gates)
+    seeds = [int(s) for s in args.seeds.split(",")] if args.seeds else list(gates["seeds"])
+    run_job(args.dataset, args.horizon, seeds, gates, args.force_lag)
 
 
 if __name__ == "__main__":

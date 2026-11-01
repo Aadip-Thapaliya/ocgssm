@@ -1,0 +1,23 @@
+stage: S6 real data (ETTh1, ETTh2), CPU only
+data: data/ETTh1.csv and data/ETTh2.csv downloaded from https://raw.githubusercontent.com/zhouhaoyi/ETDataset/main/ETT-small/; columns HUFL HULL MUFL MULL LUFL LULL OT (7 variables); rows 0-14399 used
+split: standard 12/4/4 months chronological - train rows 0-8639, validation targets 8640-11519, test targets 11520-14399 (val/test input windows may start up to 96 rows earlier; inputs only)
+standardization: per-variable mean/std of train rows only; all metrics in standardized units
+datasets: [ETTh1, ETTh2]
+horizons: [24, 96]
+seeds: [1009, 1103, 1201]
+input_length: 96
+lags_K: 2
+training: {learning_rate: 0.001, batch_size: 64, epoch_cap: 20, patience: 5, train_stride: 4}
+checkpoint: restore best validation epoch (full validation, stride 1); test evaluated once with batched inference at stride 1; per-window latency on a 100-window test sample
+variants:
+  identity/dense/random/learned: OCG-SSM (state 8, 1 layer, embedding 4), iterated head (S1 selection), graph config as S2 (default sparsity 0.001)
+  random: density = mean adjacency of the same-seed learned model
+  learned: learned_soft (S2 final)
+  var_direct: DirectVAR, direct head, K=2 (unchanged identity)
+  dlinear: DLinear class, moving average 25 (unchanged)
+divergence_rule: learned (iterated head) diverges for a dataset/horizon if any seed has a non-finite validation curve or best validation MSE above the persistence (last value) validation MSE; then learned_lag (direct_head_mode lag) is trained for all 3 seeds and the final learned head is the one with lower mean best validation MSE (validation only)
+statistics: equal-seed mean ratios of test MSE (and MAE), paired circular block bootstrap, 96-window blocks, 2000 resamples
+target: learned <= dense per dataset/horizon (point ratio of equal-seed mean test MSE); a benefit claim requires learned/dense CI upper < 1. Stage PASS if the target is met in all four dataset/horizon cases, otherwise reported case by case (failure is a valid result).
+graphs: heatmap of mean learned adjacency (rows target, columns source), top-10 off-diagonal edges, pairwise top-10 Jaccard and across-seed std; no ground truth exists, so no causal claim.
+priority_cut: if the global budget runs short, ETTh1 (both horizons) is completed before ETTh2; any unfinished case is reported as not run.
+online_adaptation: only if time remains (not planned).
