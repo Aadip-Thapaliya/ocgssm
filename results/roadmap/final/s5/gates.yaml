@@ -1,0 +1,14 @@
+﻿stage: S5 held-out adaptation (seeds 79/1301, 83/1409, 89/1511, 97/1613, 101/1709; run once)
+mission_record: docs/MISSION_FINAL.md
+protocol: results/roadmap/final/s5/tuning_protocol.yaml (commit 234dd56); data, slices, pretraining, online and detector protocol unchanged
+frozen_online_config: {ema_decay: 0.95, threshold: 3.5, boost: 5.0}
+selection_source: tuning/selection.json - grid config 6, lowest dev learned_det_on mean MSE over first 200 post-switch windows (0.019989); selected before any held-out access
+variants: [identity_online, dense_online, random_online, learned_frozen, learned_det_off, learned_det_on, oracle_online]
+primary_metric: mean per-window MSE (H=6, D=10) over stream windows 476-675 (first 200 post-switch windows)
+gate:
+  - learned_det_on - learned_frozen: paired 95% CI upper < 0
+  - learned_det_on - dense_online: paired 95% CI upper < 0
+statistics: equal-seed mean of per-window differences; paired circular block bootstrap over windows, 12-window blocks, 2000 resamples
+also_reported: pre-switch MSE, recovery time, post-switch graph F1 (0.5 and top-|E|), AUROC, SHD timeline, detector coverage/delay/false alarms, detector on vs off
+on_failure: record F3 (benefit on stationary data, no adaptation gain); no retuning; continue to S6
+budget: <= 3.5 h stage compute (tuning included)
