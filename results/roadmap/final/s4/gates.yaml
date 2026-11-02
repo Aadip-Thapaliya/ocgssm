@@ -1,0 +1,26 @@
+stage: S4 held-out confirmation (seeds 53/709, 59/811, 61/913; run once)
+mission_record: docs/MISSION_FINAL.md
+frozen_before_heldout: true
+data: D20 K2 SVAR, steps 4000, switch 3600, sparsity 0.1, noise 0.1; train 0-2399, tune 2400-2665 (checkpoint only), test slice 3200-3999.
+training: identical to S2 (lr 0.001, batch 32, epoch_cap 40, patience 5, best-tune checkpoint, graph_lr 0.01, sparsity_weight 0.001, threads 1); iterated head for all SSM variants (S1 selection).
+learned_spec_overrides: {}
+final_learned: learned_soft (S2 frozen choice; S2 PASS, no sweep used)
+variants: [identity, dense, random, learned, oracle, var_direct, var_iterated, dlinear]
+baselines:
+  var_direct: unchanged DirectVAR direct head (identity preserved).
+  var_iterated: extra disclosed baseline (DirectVAR one-step map rolled forward); not a gate comparator.
+  dlinear: unchanged DLinear baseline (moving-average decomposition, kernel 3).
+  random: fixed random mask, density matched to the per-seed true graph (as in S2).
+s4_hard: {variables: 20, train_length: 600}
+s4_hard_source: S2d (gates f8273c4) chose D20_T600 - lowest learned/dense H1 with CI upper < 1 and oracle/dense < 1; D40 included after standby-artifact correction (see DIAGNOSTICS).
+s4_hard_variants: [identity, dense, random, learned, oracle, var_direct, var_iterated, dlinear]
+primary_gate (default config D20_T2400, test slice):
+  - learned/dense paired 95% CI upper < 1 at H1
+  - learned/random paired 95% CI upper < 1 at H1
+  - learned/identity paired 95% CI upper < 1 at H1 and at H2
+secondary:
+  - learned/oracle <= 1.05 (point ratio) at H1 and H2
+  - S4-hard is secondary evidence only
+statistics: ratio of equal-seed mean MSEs over all test windows; paired circular block bootstrap, 12-window blocks, 2000 resamples. Pre-switch-only windows (targets < 3600) reported descriptively.
+on_failure: no retuning; record F2 (graph recovery works but no forecast benefit over dense) and continue to S5.
+budget: <= 2 h stage compute.
