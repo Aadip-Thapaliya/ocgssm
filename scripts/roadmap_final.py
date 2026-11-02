@@ -477,8 +477,9 @@ def run_s2d(config_names: list[str] | None, summarize: bool) -> None:
                             continue
                     if d == 40 and skip_path.exists():
                         return
+                    fresh = not (runs / f"{v}.json").exists()
                     rec = train_and_eval(runs / f"{v}.json", spec, pair, data, "gate")
-                    if d == 40 and rec["elapsed_seconds"] > 600:
+                    if d == 40 and fresh and rec["elapsed_seconds"] > 600:
                         _write_json(skip_path, {"reason": "one D40 run took > 10 min",
                                                 "run": f"{pair}/{v}",
                                                 "seconds": rec["elapsed_seconds"]})
