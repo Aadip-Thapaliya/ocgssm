@@ -46,3 +46,18 @@
 - S1 follow-up (user-directed): the diagnostics rule triggered S1b, which did not reach the OLS level (oracle still about 3% above DirectVAR; iterated kept). S3 PASS: 0/3 cap hits at 40 epochs, gain after epoch 20 under 0.05%. Learned/oracle 1.006 and 1.002, learned/dense 0.984 and 0.990 at H1/H2 (informative, development only). S2 and held-out evaluation remain paused. Artifacts are in results/roadmap/s1/{diagnostics,s1b,s3}.
 
 - Final mission (2026-11-01, `docs/MISSION_FINAL.md`, user pre-approved held-out/real-data runs). S2 (dev seeds 67/1009, 71/1103, 73/1201; validation gate slice 2933-3199; gates commit f8273c4): **PASS** with final learned = learned_soft (default sparsity 0.001; no sweep needed). learned/oracle H1 1.0059 [1.0036, 1.0083], H2 1.0022 [1.0002, 1.0043]; learned/dense H1 0.9839 [0.9811, 0.9868], H2 0.9904 [0.9886, 0.9924]; learned/random H1 0.8360 [0.8232, 0.8497]. learned_hard (threshold on tune MSE, retrained) selected an empty mask on all seeds (threshold 0.7, soft probabilities max 0.47-0.49) and is worse (hard/soft H1 1.220). learned_soft reproduced S3 bit-for-bit (same best epochs/validation MSE). var_direct retrained at cap 40; var_iterated is a new disclosed reference (var_iterated/var_direct H1 0.993). Cap hits: identity 1/3, random 1/3, var_iterated 1/3, learned_hard 2/3, others 0. Compute 40 min wall (2 slots). Full suite passes.
+
+## S2d data-scarcity sweep (dev seeds, validation gate slice) - DONE
+- learned/dense H1: D20_T600 0.9712 [0.9680, 0.9743]; D20_T1200 0.9770 [0.9739, 0.9802]; D20_T2400 0.9839 [0.9811, 0.9868]; D10_T2400 0.9890 [0.9853, 0.9929]; D40_T2400 0.9761 [0.9735, 0.9788].
+- oracle/dense H1: 0.9258, 0.9577, 0.9782, 0.9872, 0.9599 (all CI upper < 1).
+- S4-hard = D20_T600 (frozen rule). D40 completed after standby-artifact correction (DIAGNOSTICS); choice unchanged.
+- Budget: about 90 min active compute against a 60 min budget (overrun disclosed); timings of runs spanning standby are not valid.
+- S4 gates frozen at cbd9040 before any held-out access.
+
+## S4 held-out confirmation (gates cbd9040, seeds 53/709, 59/811, 61/913, test 3200-3999) - FAIL -> F2
+- Primary (default D20_T2400), all four conditions fail: learned/dense H1 0.9999 [0.9974, 1.0024]; learned/random H1 0.9926 [0.9705, 1.0162]; learned/identity H1 0.9983 [0.9731, 1.0241], H2 1.0005 [0.9835, 1.0183].
+- Secondary: learned/oracle H1 1.093, H2 1.054 (both > 1.05). learned/var_direct H1 1.045; learned/dlinear H1 1.042; oracle/dense H1 0.915 [0.906, 0.924].
+- S4-hard (D20_T600, secondary only): learned/dense H1 0.9955 [0.9919, 0.9992]; learned/identity H1 0.988 [0.969, 1.007]; learned/oracle H1 1.078.
+- Descriptive pre-switch windows only (targets < 3600): learned/dense H1 0.984 [0.982, 0.986], learned/identity 0.813, learned/random 0.825, learned/oracle 1.005, learned/var_direct 1.044. The frozen gate slice spans the 3600 regime switch; after it, every offline-trained model (except oracle, which receives the true post-switch graph) loses its advantage, which removes the pre-switch gains. This is an explanation, not a rescue: the gate is FAIL.
+- Decision: per mission, no retuning; F2 recorded ("graph recovery works but no forecast benefit over dense" on the frozen held-out slice). Learned hit epoch cap 40 on 3/3 seeds (default).
+- Runtime: about 52 min of compute (17:18-17:51 plus 18:58-19:03; pair 2 was interrupted by a lost shell session and resumed from cached runs). Summarize script fix: pre-switch table renders only H1/H2 (formatting only).

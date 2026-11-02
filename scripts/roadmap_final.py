@@ -281,7 +281,7 @@ def markdown_ratios(table: dict[str, list[dict[str, Any]]]) -> list[str]:
              "|---|---|---|---:|---:|---:|---:|---|"]
     for name, rows in table.items():
         lines.append(f"| {name} | {fmt(rows[0])} | {fmt(rows[1])} | " + " | ".join(
-            f"{rows[h]['ratio']:.4f}" for h in range(2, 6)) + " | " +
+            (f"{rows[h]['ratio']:.4f}" if h < len(rows) else "-") for h in range(2, 6)) + " | " +
             ", ".join(f"{v:.3f}" for v in rows[0]["per_seed"]) + " |")
     return lines
 
