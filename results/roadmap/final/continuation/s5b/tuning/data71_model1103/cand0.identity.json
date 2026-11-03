@@ -1,0 +1,15 @@
+{
+  "stage": "S5b",
+  "phase": "tuning",
+  "pair": [
+    71,
+    1103
+  ],
+  "candidate": 0,
+  "fast": {
+    "buffer": 32,
+    "steps": 50,
+    "reset": true
+  },
+  "tuning_protocol_commit": "5518b612fd800c7921b127bd485b1a10772d2bd2"
+}

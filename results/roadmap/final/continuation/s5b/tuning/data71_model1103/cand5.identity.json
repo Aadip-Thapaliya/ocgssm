@@ -1,0 +1,18 @@
+{
+  "stage": "S5b",
+  "pair": [
+    71,
+    1103
+  ],
+  "fast": {
+    "buffer": 64,
+    "steps": 200,
+    "reset": false
+  },
+  "online_config": {
+    "ema_decay": 0.95,
+    "threshold": 3.5,
+    "boost": 5.0
+  },
+  "tuning_protocol_commit": "5518b612fd800c7921b127bd485b1a10772d2bd2"
+}

@@ -125,7 +125,8 @@ def select() -> dict[str, Any]:
                 generic = {"stage": "S5b", "pair": list(p), "fast": fast,
                            "online_config": S5_CONFIG,
                            "tuning_protocol_commit": rf.committed_hash(TUNING_PROTOCOL)}
-                if saved not in (identity, generic):
+                rich = {**identity, "online_config": S5_CONFIG}
+                if saved not in (identity, generic, rich):
                     raise RuntimeError(f"dev sidecar identity mismatch: {sidecar}")
             else:
                 _record_identity(path, identity)
