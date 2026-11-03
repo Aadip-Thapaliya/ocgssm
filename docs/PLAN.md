@@ -85,3 +85,4 @@
 ## Continuation (2026-11-03 16:43)
 
 - Task 0 done (see DIAGNOSTICS "Continuation Task 0"); tag `final-roadmap-v1` on 1c398e2. ETTh2 H96: not run in this continuation.
+- Task 1 S4b done: stationary data (`switch_at = 4000`), fresh pairs 103/1801, 107/1907, 109/2003. The four primary conditions PASS; learned/dense H1 0.9857 [0.9841, 0.9874], learned/random H1 0.8295 [0.8227, 0.8363], learned/identity H1 0.8093 [0.8021, 0.8166], H2 0.8747 [0.8678, 0.8816]. Learned/oracle H1/H2 1.0063/1.0039 (secondary pass). This corrects the S4 slice design flaw; original S4 remains a frozen FAIL. Runtime 20m55s wall (16:54:14-17:15:09), within <=1.5 h. Gates commit 7e941a9; summary at `results/roadmap/final/continuation/s4b/summary.md`.
