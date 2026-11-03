@@ -1,0 +1,10 @@
+18:28:37 start heldout_pair_0_variant_all
+18:28:37 start heldout_pair_1_variant_all
+18:28:37 start heldout_pair_2_variant_all
+18:59:07 done heldout_pair_0_variant_all rc=0
+18:59:07 start heldout_pair_3_variant_all
+18:59:42 done heldout_pair_2_variant_all rc=0
+18:59:42 start heldout_pair_4_variant_all
+19:00:07 done heldout_pair_1_variant_all rc=0
+19:29:33 done heldout_pair_4_variant_all rc=0
+19:30:38 done heldout_pair_3_variant_all rc=0

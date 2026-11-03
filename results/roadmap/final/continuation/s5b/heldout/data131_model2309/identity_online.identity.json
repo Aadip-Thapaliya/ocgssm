@@ -1,0 +1,16 @@
+{
+  "stage": "S5b",
+  "phase": "heldout-online",
+  "pair": [
+    131,
+    2309
+  ],
+  "variant": "identity_online",
+  "online_config": {
+    "ema_decay": 0.95,
+    "threshold": 3.5,
+    "boost": 5.0
+  },
+  "s5_gates_commit": "df795691c1fced8da127a764e6ece738574e0041",
+  "s5b_gates_commit": "f334269a4390193e474449173e56ce462bbd21ec"
+}

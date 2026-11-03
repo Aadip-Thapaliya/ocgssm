@@ -1,0 +1,21 @@
+{
+  "stage": "S5b",
+  "phase": "heldout",
+  "pair": [
+    131,
+    2309
+  ],
+  "fast": {
+    "buffer": 32,
+    "steps": 50,
+    "reset": true
+  },
+  "online_config": {
+    "ema_decay": 0.95,
+    "threshold": 3.5,
+    "boost": 5.0
+  },
+  "tuning_protocol_commit": "5518b612fd800c7921b127bd485b1a10772d2bd2",
+  "variant": "learned_fast",
+  "s5b_gates_commit": "f334269a4390193e474449173e56ce462bbd21ec"
+}

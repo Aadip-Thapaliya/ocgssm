@@ -214,6 +214,7 @@ def summarize() -> None:
             "learned_fast_minus": {n: rf.paired_difference(
                 [m[lo:hi] for m in mses["learned_fast"]], [m[lo:hi] for m in ms], 981000 + i)
                 for i, (n, ms) in enumerate(mses.items()) if n != "learned_fast"}}
+    tables["post[0,200) gate"]["learned_fast_minus"]["dense_online"] = gate_diff
     graph = {}
     for n in ("learned_det_on", "learned_fast"):
         rows = []
