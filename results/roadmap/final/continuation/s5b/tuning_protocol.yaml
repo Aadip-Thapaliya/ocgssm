@@ -1,0 +1,13 @@
+﻿stage: S5b dev tuning protocol (continuation Task 2), frozen before any tuning run
+mission_record: docs/MISSION_CONTINUATION.md
+mechanism: learned_fast = frozen S5 learned_det_on (ema 0.95, threshold 3.5, boost 5, boost_steps 20, confirm 2, rearm 10, frozen-threshold calibration on tune windows) plus, on each confirmed detection, (i) ema_logits <- current logits (the buffer read by adjacency(use_ema=True), i.e. the graph used by the forecaster), (ii) for the next N structural steps the loss is computed on the most recent B observed input windows (current window included; inputs only, observed before the step; no targets, no future windows). Detector scores remain single-window. Implementation src/ocg/fast_graph.py, tests tests/test_fast_graph.py.
+unchanged: S5 dev pretraining cache (results/roadmap/final/s5/tuning/data*/pretrain, identity-checked), D=10 K=2 layout, switch 2500, stream 2000-2999, forecaster lr 0.001, delayed-label prequential protocol.
+dev_pairs: [[67, 1009], [71, 1103], [73, 1201]]
+candidates:   # 6 of the 12 {B} x {N} x {reset}: reset fixed ON because it is part of the defined mechanism; full B x N grid
+  - {buffer: 32, steps: 50, reset: true}
+  - {buffer: 32, steps: 100, reset: true}
+  - {buffer: 32, steps: 200, reset: true}
+  - {buffer: 64, steps: 50, reset: true}
+  - {buffer: 64, steps: 100, reset: true}
+  - {buffer: 64, steps: 200, reset: true}
+selection: lowest equal-seed mean dev learned_fast MSE over stream windows [476, 676) (first 200 post-switch windows); ties -> lower index. Reported beside dev learned_det_on (S5 config 6).
