@@ -403,3 +403,14 @@ Mission record: `docs/MISSION_CONTINUATION.md`. Tag `final-roadmap-v1` = 1c398e2
 - Fresh pairs: 103/1801, 107/1907, 109/2003. Variants: identity, dense, random, learned, oracle, var_direct, DLinear. Same S4 iterated SSM head, train/tune slices, and training policy; var_direct remains the original direct-head baseline and DLinear is unchanged.
 - Gate: **PASS (4/4 primary conditions)**. learned/dense H1 0.9857 [0.9841, 0.9874]; learned/random H1 0.8295 [0.8227, 0.8363]; learned/identity H1 0.8093 [0.8021, 0.8166], H2 0.8747 [0.8678, 0.8816]. Secondary learned/oracle point ratios H1/H2 1.0063/1.0039 (both <=1.05).
 - Runtime: 20m55s wall (16:54:14-17:15:09), within <=1.5 h. Output: `results/roadmap/final/continuation/s4b/summary.md` and `.json`; per-seed runs under `s4b/default/`.
+
+## Continuation Task 2: S5b (gates f334269; no retry)
+
+- Six candidates were frozen before dev tuning (tuning protocol commit 5518b61). Dev selection used only first-200 post-switch windows and selected B=32, N=50, reset ON (MSE 0.02016124). Frozen S5 learned_det_on reference on the same dev metric was 0.01998918; selection still followed the predeclared lowest-candidate rule.
+- Fresh held-out pairs 113/2111, 127/2203, 131/2309, 137/2411, 139/2503 all completed. Primary gate **FAIL**: learned_fast - dense_online +0.001084 [+0.000846, +0.001334]. Learned_fast - learned_det_on +0.000209 [+0.000169, +0.000249] on the same first-200 gate. No further attempts.
+- Post hoc, descriptive windows relative [200,495) (295 available): learned_fast - dense_online +0.001883 [+0.001568, +0.002212]; learned_fast - learned_det_on -0.000010 [-0.000035, +0.000014]. Pre-switch MSE for learned_fast 0.01511 and learned_det_on 0.01512 (paired difference -0.000003 [-0.000008, +0.000001]). Top-|E| F1 over first 200 post-switch is lower for learned_fast (0.197-0.360) than learned_det_on (0.269-0.439).
+- Runtime 2h07m wall from tuning start 17:23:40 to last held-out completion 19:30:38 (tuning 53m37s; held-out 1h02m), within the 3.5h cap. Full metrics and timeline: `results/roadmap/final/continuation/s5b/heldout/summary.md` and `s5b_post_switch.png`.
+
+## Optional S6b decision
+
+S6b was not run. At Task 2 completion 5h12m48s remained from the 8h overall allowance; reserving the required 45 minutes for docs left ~4h28m for optional experiments. In the prior S6, ETTh1 H96 identity+dense+learned took 13,886 process-seconds across 3 seeds, excluding the standby-inflated random timing; a five-seed analogue scales to about 6.4h for only those three variants on one case. The full S6b design requires 80 fits across four cases, so it could not be completed within the remaining experiment budget. If run, S6b would be follow-up on previously examined real-data test sets, not pristine confirmation.
