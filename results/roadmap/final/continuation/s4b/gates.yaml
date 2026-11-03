@@ -1,0 +1,22 @@
+﻿stage: S4b stationary held-out confirmation (continuation Task 1; run once, no retry)
+mission_record: docs/MISSION_CONTINUATION.md
+frozen_before_heldout: true
+purpose: corrects the S4 slice design flaw (switch at 3600 inside test slice 3200-3999, see DIAGNOSTICS Task 0); S4 stays a frozen FAIL.
+pairs: [[103, 1801], [107, 1907], [109, 2003]]
+data: D20 K2 SVAR, steps 4000, NO switch (switch_at = 4000 = n_steps), sparsity 0.1, noise 0.1, cross 1.0; train 0-2399, tune 2400-2665 (checkpoint only), test slice 3200-3999 (771 windows, all stationary).
+training: identical to S4 (iterated head for SSM variants, lr 0.001, batch 32, epoch_cap 40, patience 5, best-tune checkpoint, graph_lr 0.01, sparsity_weight 0.001, threads 1).
+final_learned: learned_soft (S2 frozen choice, same spec as S4)
+variants: [identity, dense, random, learned, oracle, var_direct, dlinear]
+baselines:
+  var_direct: unchanged DirectVAR direct head (same as S4). var_iterated is not run in S4b (not in the mission variant list; it was an extra non-gate baseline in S4).
+  dlinear: unchanged DLinear (moving average kernel 3).
+  random: fixed random mask density-matched to the per-seed true graph.
+primary_gate:
+  - learned/dense paired 95% CI upper < 1 at H1
+  - learned/random paired 95% CI upper < 1 at H1
+  - learned/identity paired 95% CI upper < 1 at H1 and at H2
+secondary:
+  - learned/oracle <= 1.05 (point ratio) at H1 and H2
+statistics: ratio of equal-seed mean MSEs over all 771 test windows; paired circular block bootstrap, 12-window blocks, 2000 resamples (seeds 700000+h as in S4).
+on_failure: record FAIL; no retry.
+budget: <= 1.5 h stage wall time.
