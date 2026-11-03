@@ -117,21 +117,20 @@ def heldout_job(pair_index: int, variant: str) -> None:
     pair = HELD_OUT[pair_index]
     data, gates = _held_out_data(pair)
     base_dir = ROOT / "heldout" / f"data{pair[0]}_model{pair[1]}"
-    base = BASES[variant]
-    rec = rf.train_and_eval(base_dir / "pretrain" / f"{base}.json", dict(s5.PRETRAIN[base]),
-                            pair, data, "stream", save_state=True)
-    if rec["pair"] != list(pair):
-        raise RuntimeError("pretrain identity mismatch")
-    if variant == "learned_both":
-        s5.run_online("learned_det_on", pair, data, base_dir / "pretrain", S5_CONFIG,
-                      base_dir / "learned_det_on.json")
-        variant = "learned_fast"
-    if variant == "learned_fast":
-        run_fast(pair, data, base_dir / "pretrain", gates["frozen_fast_config"],
-                 base_dir / "learned_fast.json")
-    else:
-        s5.run_online(variant, pair, data, base_dir / "pretrain", S5_CONFIG,
-                      base_dir / f"{variant}.json")
+    variants = [v for v in BASES if v != "learned_both"] if variant == "all" else (
+        ["learned_det_on", "learned_fast"] if variant == "learned_both" else [variant])
+    for base in dict.fromkeys(BASES[v] for v in variants):
+        rec = rf.train_and_eval(base_dir / "pretrain" / f"{base}.json",
+                                dict(s5.PRETRAIN[base]), pair, data, "stream", save_state=True)
+        if rec["pair"] != list(pair):
+            raise RuntimeError("pretrain identity mismatch")
+    for v in variants:
+        if v == "learned_fast":
+            run_fast(pair, data, base_dir / "pretrain", gates["frozen_fast_config"],
+                     base_dir / "learned_fast.json")
+        else:
+            s5.run_online(v, pair, data, base_dir / "pretrain", S5_CONFIG,
+                          base_dir / f"{v}.json")
 
 
 def summarize() -> None:
@@ -229,7 +228,7 @@ def main() -> None:
     parser.add_argument("--phase", required=True, choices=["tune", "select", "heldout", "summarize"])
     parser.add_argument("--pair", type=int)
     parser.add_argument("--cand", type=int)
-    parser.add_argument("--variant", choices=list(BASES))
+    parser.add_argument("--variant", choices=[*BASES, "all"])
     args = parser.parse_args()
     torch.set_num_threads(1)
     if args.phase == "tune":
