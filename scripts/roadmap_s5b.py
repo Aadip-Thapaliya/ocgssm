@@ -49,8 +49,13 @@ def _record_identity(path: Path, identity: dict[str, Any]) -> None:
 def run_fast(pair: tuple[int, int], data: dict[str, Any], state_dir: Path,
              fast: dict[str, Any], path: Path) -> dict[str, Any]:
     protocol_commit = rf.committed_hash(TUNING_PROTOCOL)
-    identity = {"stage": "S5b", "pair": list(pair), "fast": fast,
+    phase = "tuning" if path.is_relative_to(ROOT / "tuning") else "heldout"
+    identity = {"stage": "S5b", "phase": phase, "pair": list(pair), "fast": fast,
                 "online_config": S5_CONFIG, "tuning_protocol_commit": protocol_commit}
+    if phase == "tuning":
+        identity["candidate"] = int(path.stem.removeprefix("cand"))
+    else:
+        identity.update({"variant": "learned_fast", "s5b_gates_commit": rf.committed_hash(GATES)})
     if path.exists():
         rec = json.loads(path.read_text(encoding="utf-8"))
         if rec["pair"] != list(pair) or rec["fast"] != fast:
@@ -112,9 +117,18 @@ def select() -> dict[str, Any]:
             rec = json.loads(path.read_text(encoding="utf-8"))
             if rec["pair"] != list(p) or rec["fast"] != fast or rec["variant"] != "learned_fast":
                 raise RuntimeError(f"dev run identity mismatch: {path}")
-            _record_identity(path, {"stage": "S5b", "phase": "tuning", "pair": list(p),
-                                    "candidate": k, "fast": fast,
-                                    "tuning_protocol_commit": rf.committed_hash(TUNING_PROTOCOL)})
+            identity = {"stage": "S5b", "phase": "tuning", "pair": list(p), "candidate": k,
+                        "fast": fast, "tuning_protocol_commit": rf.committed_hash(TUNING_PROTOCOL)}
+            sidecar = path.with_suffix(".identity.json")
+            if sidecar.exists():
+                saved = json.loads(sidecar.read_text(encoding="utf-8"))
+                generic = {"stage": "S5b", "pair": list(p), "fast": fast,
+                           "online_config": S5_CONFIG,
+                           "tuning_protocol_commit": rf.committed_hash(TUNING_PROTOCOL)}
+                if saved not in (identity, generic):
+                    raise RuntimeError(f"dev sidecar identity mismatch: {sidecar}")
+            else:
+                _record_identity(path, identity)
             vals.append(s5.post(rec).mean())
         rows.append({"candidate": k, **fast, "dev_post_switch_mse": float(np.mean(vals))})
     ref = [s5.post(json.loads((s5.ROOT / "tuning" / f"data{p[0]}_model{p[1]}" / "config6" /
