@@ -36,12 +36,30 @@ def _protocol() -> dict[str, Any]:
     return cfg
 
 
+def _record_identity(path: Path, identity: dict[str, Any]) -> None:
+    """Write an immutable sidecar identity, refusing to replace conflicting metadata."""
+    sidecar = path.with_suffix(".identity.json")
+    if sidecar.exists():
+        if json.loads(sidecar.read_text(encoding="utf-8")) != identity:
+            raise RuntimeError(f"cached result identity mismatch: {path}")
+        return
+    _write_json(sidecar, identity)
+
+
 def run_fast(pair: tuple[int, int], data: dict[str, Any], state_dir: Path,
              fast: dict[str, Any], path: Path) -> dict[str, Any]:
+    protocol_commit = rf.committed_hash(TUNING_PROTOCOL)
+    identity = {"stage": "S5b", "pair": list(pair), "fast": fast,
+                "online_config": S5_CONFIG, "tuning_protocol_commit": protocol_commit}
     if path.exists():
         rec = json.loads(path.read_text(encoding="utf-8"))
         if rec["pair"] != list(pair) or rec["fast"] != fast:
             raise RuntimeError(f"identity mismatch in cached {path}")
+        sidecar = path.with_suffix(".identity.json")
+        if sidecar.exists() and json.loads(sidecar.read_text(encoding="utf-8")) != identity:
+            raise RuntimeError(f"identity sidecar mismatch in {sidecar}")
+        if path.is_relative_to(ROOT / "heldout") and not sidecar.exists():
+            raise RuntimeError(f"held-out result lacks identity sidecar: {path}")
         return rec
     model = s5._model(dict(s5.PRETRAIN["learned"]), pair, data, state_dir / "learned.pt")
     learner = model.graph_learner
@@ -66,6 +84,7 @@ def run_fast(pair: tuple[int, int], data: dict[str, Any], state_dir: Path,
               "detections": result["detections"], "fast_events": learner.fast_events,
               "graph_timeline": s5._graph_timeline(torch.tensor(result["graph_history"]), sg)}
     _write_json(path, record)
+    _record_identity(path, identity)
     print(json.dumps({"run": str(path), "s": round(elapsed, 1)}), flush=True)
     return record
 
@@ -76,7 +95,7 @@ def tune(pair_index: int, config_index: int) -> None:
     data = s5.s5_data(pair)
     state = s5.ROOT / "tuning" / f"data{pair[0]}_model{pair[1]}" / "pretrain"
     meta = json.loads((state / "learned.json").read_text(encoding="utf-8"))
-    if meta["pair"] != list(pair):
+    if meta["pair"] != list(pair) or meta["spec"] != s5.PRETRAIN["learned"]:
         raise RuntimeError("S5 dev pretraining cache identity mismatch")
     fast = cfg["candidates"][config_index]
     run_fast(pair, data, state, fast,
@@ -87,9 +106,16 @@ def select() -> dict[str, Any]:
     cfg = _protocol()
     rows = []
     for k, fast in enumerate(cfg["candidates"]):
-        vals = [s5.post(json.loads((ROOT / "tuning" / f"data{p[0]}_model{p[1]}" /
-                                    f"cand{k}.json").read_text(encoding="utf-8"))).mean()
-                for p in rf.DEV_PAIRS]
+        vals = []
+        for p in rf.DEV_PAIRS:
+            path = ROOT / "tuning" / f"data{p[0]}_model{p[1]}" / f"cand{k}.json"
+            rec = json.loads(path.read_text(encoding="utf-8"))
+            if rec["pair"] != list(p) or rec["fast"] != fast or rec["variant"] != "learned_fast":
+                raise RuntimeError(f"dev run identity mismatch: {path}")
+            _record_identity(path, {"stage": "S5b", "phase": "tuning", "pair": list(p),
+                                    "candidate": k, "fast": fast,
+                                    "tuning_protocol_commit": rf.committed_hash(TUNING_PROTOCOL)})
+            vals.append(s5.post(rec).mean())
         rows.append({"candidate": k, **fast, "dev_post_switch_mse": float(np.mean(vals))})
     ref = [s5.post(json.loads((s5.ROOT / "tuning" / f"data{p[0]}_model{p[1]}" / "config6" /
                                "learned_det_on.json").read_text(encoding="utf-8"))).mean()
@@ -120,17 +146,28 @@ def heldout_job(pair_index: int, variant: str) -> None:
     variants = [v for v in BASES if v != "learned_both"] if variant == "all" else (
         ["learned_det_on", "learned_fast"] if variant == "learned_both" else [variant])
     for base in dict.fromkeys(BASES[v] for v in variants):
-        rec = rf.train_and_eval(base_dir / "pretrain" / f"{base}.json",
+        pretrain_path = base_dir / "pretrain" / f"{base}.json"
+        rec = rf.train_and_eval(pretrain_path,
                                 dict(s5.PRETRAIN[base]), pair, data, "stream", save_state=True)
         if rec["pair"] != list(pair):
             raise RuntimeError("pretrain identity mismatch")
+        _record_identity(pretrain_path, {"stage": "S5b", "phase": "heldout-pretrain",
+                                         "pair": list(pair), "base": base,
+                                         "spec": dict(s5.PRETRAIN[base]),
+                                         "s5_gates_commit": rf.committed_hash(s5.GATES),
+                                         "s5b_gates_commit": rf.committed_hash(GATES)})
     for v in variants:
         if v == "learned_fast":
             run_fast(pair, data, base_dir / "pretrain", gates["frozen_fast_config"],
                      base_dir / "learned_fast.json")
         else:
-            s5.run_online(v, pair, data, base_dir / "pretrain", S5_CONFIG,
-                          base_dir / f"{v}.json")
+            output_path = base_dir / f"{v}.json"
+            s5.run_online(v, pair, data, base_dir / "pretrain", S5_CONFIG, output_path)
+            _record_identity(output_path, {"stage": "S5b", "phase": "heldout-online",
+                                           "pair": list(pair), "variant": v,
+                                           "online_config": S5_CONFIG,
+                                           "s5_gates_commit": rf.committed_hash(s5.GATES),
+                                           "s5b_gates_commit": rf.committed_hash(GATES)})
 
 
 def summarize() -> None:
