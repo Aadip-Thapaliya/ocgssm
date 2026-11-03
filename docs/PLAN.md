@@ -81,3 +81,7 @@
 - Runtime: S6 wall time about 4.8 h (process windows, 1 slot running alongside S5/S2d/S4 jobs, excluding standby) against a 3 h budget - overrun disclosed; ETTh2 H96 was stopped at 12:01 rather than extending silently. Online-adapted real-data evaluation was not run (no time remained).
 - Runtime/standby caveat: invalid `elapsed_seconds`/`train s` values from runs that straddled standby (for example ETTh1 H96 random 44,434 s) are not compute times.
 - Correction to the S4 entry: S4 wall time was about 62 min (17:18-18:11 and 18:57-19:06), not 52 min.
+
+## Continuation (2026-11-03 16:43)
+
+- Task 0 done (see DIAGNOSTICS "Continuation Task 0"); tag `final-roadmap-v1` on 1c398e2. ETTh2 H96: not run in this continuation.
