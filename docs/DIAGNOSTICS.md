@@ -368,3 +368,23 @@ On dev pairs 67/1009, 71/1103, 73/1201 and validation slice 2933-3199 only: repo
 - Descriptive pre-switch windows only (targets < 3600): learned/dense H1 0.984 [0.982, 0.986], learned/identity 0.813, learned/random 0.825, learned/oracle 1.005, learned/var_direct 1.044. The frozen gate slice spans the 3600 regime switch; after it, every offline-trained model (except oracle, which receives the true post-switch graph) loses its advantage, which removes the pre-switch gains. This is an explanation, not a rescue: the gate is FAIL.
 - Decision: per mission, no retuning; F2 recorded ("graph recovery works but no forecast benefit over dense" on the frozen held-out slice). Learned hit epoch cap 40 on 3/3 seeds (default).
 - Runtime: about 52 min of compute (17:18-17:51 plus 18:58-19:03; pair 2 was interrupted by a lost shell session and resumed from cached runs). Summarize script fix: pre-switch table renders only H1/H2 (formatting only).
+
+## S5 held-out adaptation (gates df79569; seeds 79/1301, 83/1409, 89/1511, 97/1613, 101/1709; all 5 complete) - FAIL -> F3
+- Frozen online config (dev tuning, 8-config grid): EMA 0.95, threshold 3.5, boost 5 (dev post-switch MSE 0.019989).
+- Primary metric (first 200 post-switch windows, mean MSE): learned_det_on 0.01728; learned_frozen 0.01894; dense_online 0.01716; identity_online 0.01675; random_online 0.01688; oracle_online 0.01558; learned_det_off 0.01748.
+- Gate: det_on - frozen = -0.001661 [-0.001831, -0.001502] (pass); det_on - dense_online = +0.000117 [+0.000026, +0.000211] (FAIL; dense is better). Gate FAIL -> F3 (benefit on stationary data, no adaptation gain over dense online). No retuning.
+- Additional: det_on - det_off = -0.000196 [-0.000230, -0.000166] (detector helps); identity_online is the best non-oracle variant post-switch (det_on - identity = +0.000527 [0.000371, 0.000678]). Pre-switch MSE: learned 0.01538-0.01554 versus dense 0.01618 and identity 0.01854.
+- Detector (det_on): 5/5 switches detected, 0 false alarms, delay 10, 2, 3, 2, 12 steps. det_off: no detections (by design).
+- Graph tracking: pre-switch top-|E| F1 about 1.0; first-200 post-switch top-|E| F1 0.23-0.37 (det_on) versus 0.17-0.31 (det_off); final 0.38-0.65 versus 0.34-0.52; AUROC 0.87-0.89; F1@0.5 is uninformative (probabilities stay below 0.5). The learned graph does not recover the post-switch graph within 200 windows.
+- Runtime and budget: S5 wall time about 5.8 h (tuning 23:57-01:44 and about 0.1 h after resume; dev reference 17:17-18:11, 18:57-19:35, 09:34-09:59; held-out 09:59-11:59 on 2-3 slots), against the 3.5 h budget plus a user-approved extension of 2 h (+15 min, unused: last held-out run finished 11:59:18). Summed process time is larger (parallel slots) and is not wall time. The S5 dev reference re-run (`--phase select` reporting on dev with the frozen config) was stopped at the deadline and is incomplete; selection itself (tuning/selection.json) was complete before any held-out access.
+
+## S6 real data (gates 9ef1ded; ETTh1/ETTh2, standardized with train statistics; test 11520-14399) - per-case results
+- ETTh1 H24: learned/dense MSE 0.9731 [0.9622, 0.9834] (CI-supported benefit); learned/identity 0.9479 [0.9305, 0.9668]; learned/dlinear 1.733 [1.624, 1.856].
+- ETTh1 H96: learned/dense 0.9967 [0.9898, 1.0034] (point target met, no CI benefit); learned/identity 0.9753; learned/dlinear 1.553.
+- ETTh2 H24: learned/dense 0.9907 [0.9839, 0.9973] (CI-supported benefit); learned/identity 0.9828 [0.9761, 0.9893]; learned/dlinear 1.153 [1.114, 1.197].
+- ETTh2 H96: INCOMPLETE (2 of 3 seeds; S6 stage budget exhausted; not evaluated).
+- No iterated-head divergence (all learned validation MSE < persistence), so learned_lag was not needed. All OCG variants hit the 20-epoch cap with best epoch 20 (under-trained under the frozen cap). DLinear is the best model in every case; var_direct is the worst (DirectVAR without per-window normalization is poorly suited to these non-stationary series).
+- Learned graphs: mean density 0.43; top-10 edge Jaccard across seeds 0.25-0.43 (ETTh1) and 0.0-0.18 (ETTh2); no ground truth, so graphs are descriptive only.
+- Runtime: S6 wall time about 4.8 h (process windows, 1 slot running alongside S5/S2d/S4 jobs, excluding standby) against a 3 h budget - overrun disclosed; ETTh2 H96 was stopped at 12:01 rather than extending silently. Online-adapted real-data evaluation was not run (no time remained).
+- Runtime/standby caveat: invalid `elapsed_seconds`/`train s` values from runs that straddled standby (for example ETTh1 H96 random 44,434 s) are not compute times.
+- Correction to the S4 entry: S4 wall time was about 62 min (17:18-18:11 and 18:57-19:06), not 52 min.

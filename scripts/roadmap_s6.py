@@ -181,10 +181,16 @@ def summarize(datasets: list[str], horizons: list[int], commit: str) -> dict[str
             base = ROOT / ds / f"H{h}"
             if not base.exists():
                 continue
-            persistence = json.loads((base / "persistence.json").read_text())["validation_mse"]
             names = ["identity", "dense", "random", "learned", "var_direct", "dlinear", "learned_lag"]
             recs = {n: _load(base, n) for n in names}
+            done = {n: len(r) for n, r in recs.items() if r}
             recs = {n: r for n, r in recs.items() if len(r) == len(SEEDS)}
+            if "learned" not in recs:
+                summary["results"][f"{ds}_H{h}"] = {"status": "INCOMPLETE", "seeds_done": done}
+                lines += [f"## {ds}_H{h}: INCOMPLETE (stage budget exhausted; seeds done per "
+                          f"variant {done}); not evaluated", ""]
+                continue
+            persistence = json.loads((base / "persistence.json").read_text())["validation_mse"]
             head = "learned"
             divergent = any(diverged(r, persistence) for r in recs["learned"])
             if divergent and "learned_lag" in recs:

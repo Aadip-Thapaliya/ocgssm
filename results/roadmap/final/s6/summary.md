@@ -72,3 +72,40 @@ Learned graph: mean density 0.430; top-10 edge Jaccard across seeds [0.25, 0.429
 
 ![ETTh1_H96 learned graph](ETTh1/H96/learned_graph.png)
 
+## ETTh2_H24 (final learned head: learned; iterated divergent: False; persistence val MSE 0.2084)
+
+| Variant | test MSE | test MAE | per-seed MSE | median window MSE | best val | best epochs | cap hits | train s | ms/window |
+|---|---:|---:|---|---:|---|---|---:|---:|---:|
+| identity | 0.2093 | 0.3003 | 0.2100, 0.2098, 0.2082 | 0.1423 | 0.1587, 0.1600, 0.1597 | [20, 20, 20] | 3 | 1201 | 63.36 |
+| dense | 0.2077 | 0.3018 | 0.2109, 0.2074, 0.2046 | 0.1413 | 0.1608, 0.1574, 0.1562 | [20, 20, 20] | 3 | 840 | 63.29 |
+| random | 0.2090 | 0.3020 | 0.2117, 0.2089, 0.2063 | 0.1434 | 0.1604, 0.1592, 0.1573 | [20, 20, 20] | 3 | 1067 | 91.40 |
+| learned | 0.2057 | 0.2991 | 0.2075, 0.2031, 0.2066 | 0.1394 | 0.1580, 0.1536, 0.1564 | [20, 20, 20] | 3 | 968 | 86.32 |
+| var_direct | 0.8652 | 0.7539 | 0.8652, 0.8652, 0.8652 | 0.8271 | 0.4024, 0.4024, 0.4024 | [20, 20, 20] | 3 | 9 | 0.16 |
+| dlinear | 0.1785 | 0.2714 | 0.1785, 0.1785, 0.1785 | 0.1060 | 0.1232, 0.1232, 0.1232 | [6, 6, 6] | 0 | 13 | 0.24 |
+
+| Ratio | value | 95% CI | per seed |
+|---|---:|---|---|
+| learned/dense mse | 0.9907 | [0.9839, 0.9973] | 0.9837, 0.9792, 1.0096 |
+| learned/dense mae | 0.9912 | [0.9879, 0.9943] | 0.9855, 0.9865, 1.0016 |
+| learned/identity mse | 0.9828 | [0.9761, 0.9893] | 0.9883, 0.9681, 0.9921 |
+| learned/identity mae | 0.9960 | [0.9922, 1.0000] | 0.9997, 0.9875, 1.0009 |
+| learned/random mse | 0.9845 | [0.9774, 0.9909] | 0.9802, 0.9720, 1.0016 |
+| learned/random mae | 0.9904 | [0.9869, 0.9938] | 0.9833, 0.9871, 1.0009 |
+| learned/var_direct mse | 0.2378 | [0.2136, 0.2616] | 0.2398, 0.2347, 0.2388 |
+| learned/var_direct mae | 0.3967 | [0.3738, 0.4202] | 0.3984, 0.3938, 0.3979 |
+| learned/dlinear mse | 1.1527 | [1.1142, 1.1971] | 1.1627, 1.1378, 1.1576 |
+| learned/dlinear mae | 1.1019 | [1.0836, 1.1209] | 1.1066, 1.0939, 1.1051 |
+| dense/identity mse | 0.9920 | [0.9819, 1.0019] | 1.0047, 0.9887, 0.9826 |
+| dense/identity mae | 1.0049 | [0.9993, 1.0103] | 1.0144, 1.0010, 0.9993 |
+| var_direct/identity mse | 4.1333 | [3.7494, 4.5719] | 4.1209, 4.1246, 4.1547 |
+| var_direct/identity mae | 2.5106 | [2.3732, 2.6535] | 2.5091, 2.5073, 2.5154 |
+| dlinear/identity mse | 0.8526 | [0.8156, 0.8854] | 0.8501, 0.8508, 0.8570 |
+| dlinear/identity mae | 0.9039 | [0.8855, 0.9215] | 0.9034, 0.9027, 0.9056 |
+
+Target learned <= dense (point): **met**; CI-supported benefit: **yes**.
+Learned graph: mean density 0.432; top-10 edge Jaccard across seeds [0.0, 0.0, 0.176]; mean across-seed std of edge probabilities 0.022. Top edges (lag, source->target, mean prob): L2 LUFL->MUFL 0.44; L1 MUFL->LUFL 0.44; L1 HUFL->HULL 0.44; L2 HULL->MULL 0.43; L1 OT->HULL 0.43; L1 MULL->HULL 0.43; L2 LULL->HULL 0.43; L2 LULL->LUFL 0.43; L1 LULL->HUFL 0.43; L1 HUFL->MULL 0.43
+
+![ETTh2_H24 learned graph](ETTh2/H24/learned_graph.png)
+
+## ETTh2_H96: INCOMPLETE (stage budget exhausted; seeds done per variant {'identity': 2, 'dense': 2, 'random': 2, 'learned': 2, 'var_direct': 2, 'dlinear': 2}); not evaluated
+
