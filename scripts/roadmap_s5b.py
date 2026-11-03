@@ -145,7 +145,7 @@ def select() -> dict[str, Any]:
 def _held_out_data(pair: tuple[int, int]) -> tuple[dict[str, Any], dict[str, Any]]:
     gates = yaml.safe_load(GATES.read_text(encoding="utf-8"))
     rf.committed_hash(GATES)
-    if gates["pairs"] != [list(p) for p in HELD_OUT]:
+    if gates["heldout_pairs"] != [list(p) for p in HELD_OUT]:
         raise RuntimeError("gates pairs do not match runner")
     if set(HELD_OUT) & (rf.HELD_OUT | rf.BURNED_PAIRS | set(rf.DEV_PAIRS)):
         raise RuntimeError("S5b held-out pairs must be fresh")

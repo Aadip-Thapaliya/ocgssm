@@ -3,6 +3,7 @@ mission_record: docs/MISSION_CONTINUATION.md
 frozen_before_heldout: true
 data: D10 K2 SVAR, steps 3000, switch_at 2500, sparsity 0.2, noise 0.1, cross_variable_scale 1.5; stream raw slice 2000-2999 (971 windows), first post-switch gate windows [476,676).
 dev_selection: results/roadmap/final/continuation/s5b/tuning/selection.json; six candidates in tuning_protocol.yaml (commit recorded with this gate freeze); select lowest dev mean MSE over 200 post-switch windows.
+tuning_protocol_commit: 5518b61 (frozen candidates before tuning; identity-checked dev cache)
 frozen_fast_config: {buffer: 32, steps: 50, reset: true}
 frozen_s5_online_config: {ema_decay: 0.95, threshold: 3.5, boost: 5.0, boost_steps: 20, detector_confirm_steps: 2, detector_rearm_steps: 10}
 heldout_pairs: [[113, 2111], [127, 2203], [131, 2309], [137, 2411], [139, 2503]]
