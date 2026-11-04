@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "OCG-SSM: Online Causal-Graph-Conditioned State-Space Forecasting"
+abstract: >-
+  OCG-SSM is a multivariate time-series forecaster that learns a lagged
+  dependency graph between variables, uses it to condition a state-space
+  model written in pure PyTorch, and updates the graph online with a
+  regime-switch detector. The repository includes synthetic generators with
+  known graphs, graph-recovery metrics, a leak-safe online evaluation
+  protocol, baselines (identity, dense, random, oracle, DirectVAR, DLinear)
+  and reproducible experiment scripts.
+authors:
+  - family-names: Thapaliya
+    given-names: Aadip
+    affiliation: "University of Europe for Applied Sciences"
+repository-code: "https://github.com/Aadip-Thapaliya/ocgssm"
+url: "https://github.com/Aadip-Thapaliya/ocgssm"
+keywords:
+  - time series forecasting
+  - state-space models
+  - graph learning
+  - Granger causality
+  - online learning
+  - concept drift
+version: final-roadmap-v2
+date-released: 2026-11-04
