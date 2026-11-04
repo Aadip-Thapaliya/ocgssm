@@ -1,0 +1,21 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S5,identity_online,post_switch_first200_mean,0.01675287663954077,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,identity_online,pre_switch_mean,0.018544420269121842,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,dense_online,post_switch_first200_mean,0.01716352757322602,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,dense_online,pre_switch_mean,0.01618495735698047,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,random_online,post_switch_first200_mean,0.016881552986723062,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,random_online,pre_switch_mean,0.018063874186867855,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,oracle_online,post_switch_first200_mean,0.015576672336047825,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,oracle_online,pre_switch_mean,0.015536008023823992,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_frozen,post_switch_first200_mean,0.018941248353997554,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_frozen,pre_switch_mean,0.015382098157846308,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_det_off,post_switch_first200_mean,0.01747637812471172,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_det_off,pre_switch_mean,0.015536024074819235,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_det_on,post_switch_first200_mean,0.01728034278358488,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_det_on,pre_switch_mean,0.015536024074819235,,,GATE FAIL,Original S5 held-out summary; paired comparison CIs are in difference rows.
+S5,learned_det_on-identity_online,1,0.0005274661440441087,0.0003711362568385082,0.0006780519071486197,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."
+S5,learned_det_on-dense_online,1,0.00011681521035886086,2.648803703680848e-05,0.00021101741304931616,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."
+S5,learned_det_on-random_online,1,0.00039878979686181897,0.00028088688694018367,0.0005339165512055246,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."
+S5,learned_det_on-oracle_online,1,0.0017036704475370547,0.0015367046980400735,0.0018827958379978853,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."
+S5,learned_det_on-learned_frozen,1,-0.0016609055704126748,-0.0018310631394657928,-0.001501888160661716,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."
+S5,learned_det_on-learned_det_off,1,-0.0001960353411268434,-0.00022951315192719078,-0.00016552253746097734,GATE FAIL,"Paired learned_det_on minus comparator, frozen first-200 gate."

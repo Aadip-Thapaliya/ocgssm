@@ -1,0 +1,7 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S3,learned_soft_iterated,1,1.0348637108726346,1.026918114142378,1.0427866479354369,PASS,Convergence/cap diagnostic; validation only.
+S3,learned_soft_iterated,2,1.0355943597133073,1.0284353696072355,1.0433185482867406,PASS,Convergence/cap diagnostic; validation only.
+S3,learned_soft_iterated,3,1.0340185439402214,1.0265427502025148,1.0414700083976884,PASS,Convergence/cap diagnostic; validation only.
+S3,learned_soft_iterated,4,1.0298986406753037,1.0226765861198928,1.0374048644911853,PASS,Convergence/cap diagnostic; validation only.
+S3,learned_soft_iterated,5,1.030968269783963,1.0226443214813514,1.0381949962276555,PASS,Convergence/cap diagnostic; validation only.
+S3,learned_soft_iterated,6,1.029754660646787,1.0227042946248373,1.0372450227241987,PASS,Convergence/cap diagnostic; validation only.

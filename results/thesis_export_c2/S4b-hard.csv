@@ -1,0 +1,37 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S4b-hard,learned/identity,1,0.8517710155378011,0.8453468727972511,0.8588177596107444,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/identity,2,0.9104849947431779,0.904585941992043,0.9162032434427919,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/identity,3,0.9790884808701847,0.9758010369152964,0.9825782113843543,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/identity,4,0.9907047135243396,0.9881027041201936,0.993331845541477,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/identity,5,0.9989076984284935,0.9972312403079081,1.0006904331927862,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/identity,6,0.999392469654265,0.9980178844138649,1.0006975998656842,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,1,0.9734817730143219,0.9714863614429022,0.975413803977023,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,2,0.9865375408708966,0.985227362908721,0.9879602301979509,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,3,0.9930572350631657,0.9914545699128222,0.9947677046450237,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,4,0.9921678348772717,0.9903873015809846,0.994072253386194,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,5,0.999201523284755,0.998085595337892,1.0002905970952798,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/dense,6,0.9983548319476542,0.9971944294314632,0.9995713296292209,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,1,0.8533939975593925,0.8470780319626287,0.8601416996677435,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,2,0.914551428583411,0.9088549303217758,0.9201119820865319,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,3,0.9790212922773192,0.9757496502595391,0.982460019875606,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,4,0.9907825985871037,0.9881200993075586,0.9934523865934126,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,5,0.9987917202132651,0.9970050881666883,1.0006221424650061,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/random,6,0.9986178986641935,0.9971877363335054,1.0000560955695916,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,1,1.046640932490456,1.0422447203362963,1.0512165979052133,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,2,1.026831784142965,1.0234882259677796,1.0303232883588187,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,3,1.009883064906326,1.0076363978607237,1.012257947287957,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,4,1.0052385580972023,1.00341939844283,1.007180817193656,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,5,1.003117285883419,1.001813555699916,1.00450418577537,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/oracle,6,1.0009302657444965,0.9998068042043922,1.002047856668989,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,1,0.9884540971148675,0.9830936291464488,0.993701625898853,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,2,1.0083891575070185,1.003131351565513,1.0136572529710821,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,3,1.0269233623800573,1.0220205864551604,1.0318918258780543,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,4,1.0262298789718236,1.0208848785716282,1.0313126226307916,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,5,1.0271521793548406,1.0222628561557334,1.0324848525446941,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,learned/var_direct,6,1.0279563079249907,1.0224610499059315,1.033250865981399,PASS,Stationary D20_T600; gate includes learned/dense point <0.9857.
+S4b-hard,identity,cap_hits,3,,,TRAINING DIAGNOSTIC,"best epochs=[40, 40, 40]; epochs=[40, 40, 40]"
+S4b-hard,dense,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[17, 13, 13]; epochs=[22, 18, 18]"
+S4b-hard,random,cap_hits,2,,,TRAINING DIAGNOSTIC,"best epochs=[40, 40, 19]; epochs=[40, 40, 24]"
+S4b-hard,learned,cap_hits,2,,,TRAINING DIAGNOSTIC,"best epochs=[37, 27, 40]; epochs=[40, 32, 40]"
+S4b-hard,oracle,cap_hits,1,,,TRAINING DIAGNOSTIC,"best epochs=[37, 34, 31]; epochs=[40, 39, 36]"
+S4b-hard,var_direct,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[9, 4, 7]; epochs=[14, 9, 12]"

@@ -1,0 +1,2 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+Saturation,pre-update EMA snapshots,"windows 0,50,100,200",,,,UNAVAILABLE,UNAVAILABLE: saved records contain no pre-update EMA graph snapshots; only aggregate graph_timeline metrics were retained. No model was rerun and no topology proxy substituted.

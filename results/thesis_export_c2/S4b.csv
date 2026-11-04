@@ -1,0 +1,62 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S4b,learned/identity,1,0.8093383403257183,0.8021014068302146,0.8165807247941315,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/identity,2,0.874658156323048,0.8678093712318418,0.8816126750180525,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/identity,3,0.9684126181174469,0.96435620258216,0.9725787618458748,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/identity,4,0.9839298828486162,0.9807362057271074,0.9868594197205123,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/identity,5,0.9942904203444954,0.9924216246751324,0.9960659574251645,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/identity,6,0.9977493148666639,0.9964846322822305,0.999066055344711,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,1,0.9856947023789434,0.984067372542292,0.9873557746225601,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,2,0.9917069361695358,0.9901892848762692,0.9931596382680965,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,3,0.9966483435881195,0.995568153181353,0.9978443661081691,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,4,0.9979952103686877,0.9969394045210888,0.9991178651108649,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,5,0.9996783761875276,0.9988903570775455,1.000498261590383,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dense,6,1.0004039374762081,0.9997237150846591,1.0010810019403302,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,1,0.829488960299989,0.8226570729174862,0.8362823749458697,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,2,0.8870780259084036,0.8807988007069419,0.8933646893382792,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,3,0.9700929923005004,0.9660288920746725,0.9741289287666222,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,4,0.9850835150765633,0.9819942940740778,0.9879804223174449,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,5,0.9943951703849179,0.9925202494388377,0.9961477958615603,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/random,6,0.9977047797754751,0.9964797661063823,0.9990092418212237,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,1,1.0063371492939608,1.004948843899484,1.007716181391162,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,2,1.003887907181811,1.0026963485630216,1.005139740899203,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,3,1.0022746741832387,1.0012462791659515,1.003302489057749,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,4,1.0012131698612718,1.0002662329421683,1.0021830674750503,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,5,0.9999363940268085,0.9992686013443325,1.0006378099711972,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/oracle,6,1.0001339884615659,0.9994901259213724,1.0007245552256352,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,1,1.0378627195360448,1.0337444643286704,1.0419477605033909,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,2,1.0318438664627199,1.0272150947250687,1.036784313783355,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,3,1.029977252866448,1.0248946936645602,1.0349598015630956,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,4,1.0285760360586145,1.023537075291082,1.034031321400022,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,5,1.0297693420907847,1.0242901799924113,1.0353026919263666,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/var_direct,6,1.029101381414377,1.0232943721900185,1.0349076313021146,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,1,0.8357499505688003,0.8274701658824165,0.8443104421801751,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,2,0.908339241296846,0.9007767191278979,0.9161818140766735,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,3,1.0099845460216754,1.0039528644153388,1.0162857949349302,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,4,1.026169496169433,1.0203242280294618,1.0321825725696416,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,5,1.038160249753226,1.0327169254309467,1.0437940119867064,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,learned/dlinear,6,1.0413407458234254,1.0358462776581565,1.046503486587873,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,1,0.9794875435836786,0.976990003156397,0.981934104211623,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,2,0.9878662040601021,0.985467951487455,0.990118580892906,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,3,0.9943864384284635,0.9926985148770416,0.9961644633412,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,4,0.9967859397084936,0.9952988587573242,0.9983644110095501,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,5,0.9997419657481995,0.9987884815941582,1.0007061762795566,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/dense,6,1.0002699128494348,0.9996043882417437,1.00095391032244,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,1,0.821084194094181,0.8133241044296596,0.8289493167894243,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,2,0.8819724098143467,0.8746715687184606,0.8893898576883525,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,3,0.9716693198234607,0.9671635753486507,0.9760197652316278,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,4,0.985906417812491,0.9824054051657066,0.9892367981607588,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,5,0.9946103107045485,0.9925739168175143,0.9965157625054082,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,dense/identity,6,0.997346449259045,0.9960331369180809,0.9986873959483825,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,1,1.031327046074173,1.0268792688985195,1.0356796113510673,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,2,1.0278476900467792,1.023007800064823,1.0329487834098756,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,3,1.0276397073544576,1.0225625470150013,1.0326671424501914,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,4,1.027329710616106,1.0220582798201738,1.0327669834439994,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,5,1.0298348457383746,1.0244096842485175,1.035464827047805,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,oracle/var_direct,6,1.0289635121763732,1.0231787670309018,1.0348124070133824,PASS,Stationary held-out confirmation; original S4 unchanged.
+S4b,identity,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[16, 12, 11]; epochs=[21, 17, 16]"
+S4b,dense,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[9, 13, 15]; epochs=[14, 18, 20]"
+S4b,random,cap_hits,2,,,TRAINING DIAGNOSTIC,"best epochs=[40, 40, 24]; epochs=[40, 40, 29]"
+S4b,learned,cap_hits,2,,,TRAINING DIAGNOSTIC,"best epochs=[40, 40, 27]; epochs=[40, 40, 32]"
+S4b,oracle,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[22, 22, 19]; epochs=[27, 27, 24]"
+S4b,var_direct,cap_hits,0,,,TRAINING DIAGNOSTIC,"best epochs=[6, 6, 8]; epochs=[11, 11, 13]"
+S4b,dlinear,cap_hits,2,,,TRAINING DIAGNOSTIC,"best epochs=[4, 39, 39]; epochs=[9, 40, 40]"

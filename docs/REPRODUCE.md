@@ -66,5 +66,23 @@ S5b selected B=32, N=50, EMA reset on. The frozen primary gate failed; there was
 
 The continuation's S4 audit and pre-switch/post-switch descriptive tables are in `results/roadmap/final/continuation/task0/task0.md`. The S4b and S5b summaries, identity sidecars, and figures are stored alongside their seed-specific result files. Final continuation tag: `final-roadmap-v2`.
 
+## Continuation 2 (local-only; no push)
+Saved-output-only pooled analysis and saturation-snapshot availability:
+```powershell
+& $py -m scripts.roadmap_continuation2
+```
+S4b-hard is the new stationary D20_T600 evaluation. Its gates were frozen before any held-out data access in `results/roadmap/final/continuation2/s4b_hard/gates.yaml` (corrected YAML quoting in commit 4c76cd6; gate semantics unchanged):
+```powershell
+& $py -m scripts.roadmap_s4b_hard --pairs 0
+& $py -m scripts.roadmap_s4b_hard --pairs 1
+& $py -m scripts.roadmap_s4b_hard --pairs 2
+& $py -m scripts.roadmap_s4b_hard --summarize
+```
+The complete thesis export is in `results/thesis_export_c2/`: per-stage CSVs and pooled tables plus two figures each in PNG and PDF. Generate it with:
+```powershell
+& $py -m scripts.export_thesis_assets_c2
+```
+The hygiene report audits the already-pushed `roadmap-continuation-final` branch only. This continuation's commits are local and have not been pushed.
+
 ## Timing caveat
 The laptop entered Windows Modern Standby several times (about 2026-11-02 01:44-15:53 and 2026-11-02 ~19:45 - 2026-11-03 09:33). Runs that straddled standby record inflated `elapsed_seconds` (for example 51,133 s); results are unaffected (deterministic), but those timings are invalid and are excluded or flagged in all runtime reports.

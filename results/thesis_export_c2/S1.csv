@@ -1,0 +1,19 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S1,oracle_lag,1,1.0275439947038125,1.0187034030234985,1.0365526363919328,PASS,Iterated head selected on validation.
+S1,oracle_lag,2,1.1294100280575952,1.1168467321817905,1.1424452798226659,PASS,Iterated head selected on validation.
+S1,oracle_lag,3,1.0584840391500556,1.04769026843829,1.0686054513854852,PASS,Iterated head selected on validation.
+S1,oracle_lag,4,1.038870046977454,1.0304447459419468,1.0472323783431419,PASS,Iterated head selected on validation.
+S1,oracle_lag,5,1.0334711702413082,1.025261503387846,1.0411464368952363,PASS,Iterated head selected on validation.
+S1,oracle_lag,6,1.0332061150666745,1.0259899936630494,1.04106861254515,PASS,Iterated head selected on validation.
+S1,oracle_reachability,1,1.0285472784686602,1.0198438152915916,1.037147473063336,PASS,Iterated head selected on validation.
+S1,oracle_reachability,2,1.0364999286917458,1.0294129536419796,1.0441144774734266,PASS,Iterated head selected on validation.
+S1,oracle_reachability,3,1.0401714988633737,1.0326687012950093,1.0477010233015502,PASS,Iterated head selected on validation.
+S1,oracle_reachability,4,1.0411793740556867,1.034466118675143,1.0479021002279179,PASS,Iterated head selected on validation.
+S1,oracle_reachability,5,1.0458653304252679,1.0382038551225774,1.0534439777370186,PASS,Iterated head selected on validation.
+S1,oracle_reachability,6,1.0445557967920402,1.0376228822578104,1.0520621767653908,PASS,Iterated head selected on validation.
+S1,oracle_iterated,1,1.0288022299883441,1.01978026519785,1.0380249049001928,PASS,Iterated head selected on validation.
+S1,oracle_iterated,2,1.0333161564638278,1.0260029490300768,1.0413347935899715,PASS,Iterated head selected on validation.
+S1,oracle_iterated,3,1.033638686357927,1.0255676136012741,1.0417010462289367,PASS,Iterated head selected on validation.
+S1,oracle_iterated,4,1.028541424085054,1.020838545832486,1.0362848806415108,PASS,Iterated head selected on validation.
+S1,oracle_iterated,5,1.0305225659150075,1.0222768597377694,1.037813924804819,PASS,Iterated head selected on validation.
+S1,oracle_iterated,6,1.029534023350759,1.0224675186022845,1.0369795927930792,PASS,Iterated head selected on validation.

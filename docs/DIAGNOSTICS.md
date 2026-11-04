@@ -414,3 +414,36 @@ Mission record: `docs/MISSION_CONTINUATION.md`. Tag `final-roadmap-v1` = 1c398e2
 ## Optional S6b decision
 
 S6b was not run. At Task 2 completion 5h12m48s remained from the 8h overall allowance; reserving the required 45 minutes for docs left ~4h28m for optional experiments. In the prior S6, ETTh1 H96 identity+dense+learned took 13,886 process-seconds across 3 seeds, excluding the standby-inflated random timing; a five-seed analogue scales to about 6.4h for only those three variants on one case. The full S6b design requires 80 fits across four cases, so it could not be completed within the remaining experiment budget. If run, S6b would be follow-up on previously examined real-data test sets, not pristine confirmation.
+
+## Continuation 2 (2026-11-04, local only; no push)
+
+### Task A: pooled S5/S5b and saturation (saved outputs only)
+
+Pooled 10 held-out seed pairs with equal-seed means; comparisons are paired by seed and resample the same circular 12-window blocks within each matched seed (2000 bootstrap draws). Windows use half-open stream indices: post [0,200) = stream [476,676), post [200,495) = [676,971), pre-switch [0,471) = [0,471). All pooled values are post hoc/descriptive.
+
+| Range | Variant | Mean MSE [95% CI] | learned_det_on - variant [95% CI] |
+|---|---|---:|---:|
+| Post [0,200) | learned_det_on | 0.019778 [0.019159, 0.020405] | - |
+| Post [0,200) | dense_online | 0.019282 [0.018724, 0.019874] | +0.000496 [+0.000369, +0.000633] |
+| Post [0,200) | identity_online | 0.019244 [0.018648, 0.019818] | +0.000534 [+0.000426, +0.000653] |
+| Post [0,200) | oracle_online | 0.017565 [0.017045, 0.018100] | +0.002213 [+0.002041, +0.002385] |
+| Post [200,495) | learned_det_on | 0.018543 [0.018073, 0.019001] | - |
+| Post [200,495) | dense_online | 0.017153 [0.016778, 0.017559] | +0.001391 [+0.001205, +0.001574] |
+| Post [200,495) | identity_online | 0.019146 [0.018664, 0.019645] | -0.000603 [-0.000674, -0.000535] |
+| Post [200,495) | oracle_online | 0.016101 [0.015748, 0.016462] | +0.002442 [+0.002246, +0.002648] |
+| Pre [0,471) | learned_det_on | 0.015326 [0.015094, 0.015564] | - |
+| Pre [0,471) | dense_online | 0.015899 [0.015659, 0.016162] | -0.000573 [-0.000646, -0.000507] |
+| Pre [0,471) | identity_online | 0.018057 [0.017723, 0.018409] | -0.002731 [-0.002897, -0.002572] |
+| Pre [0,471) | oracle_online | 0.015308 [0.015066, 0.015539] | +0.000019 [-0.000002, +0.000040] |
+
+Saturation request cannot be calculated from the retained files. The online JSONs in both campaigns contain `errors`, `detections`, and `graph_timeline` (`f1`, `auroc`, `shd`, `f1_topk`) but no saved pre-update EMA adjacency matrices. The requested new-edge/other-entry probabilities at 0/50/100/200 and <0.05 determination are therefore UNAVAILABLE; no retraining or topology proxy was used. Exact inspection report is `results/roadmap/final/continuation2/task_a/saturation_availability.json`.
+
+### Task B: S4b-hard stationary D20_T600
+
+Gate initially failed YAML parsing before data creation; the colon in a descriptive `training` scalar was quoted and committed (4c76cd6) without changing gate semantics, before any held-out access. The corrected frozen gate commit is 4c76cd6. Fresh pairs: 149/2609, 151/2713, 157/2819. No switch, train [1800,2400), tune [2400,2666), test [3200,4000). The complete run completed once in 20m05s (12:24:16-12:44:21), within 45 minutes.
+
+Gate **PASS (4/4)**: learned/dense H1 0.9735 [0.9715, 0.9754] and point ratio 0.9735 < 0.9857; learned/identity H1 0.8518 [0.8453, 0.8588]; learned/random H1 0.8534 [0.8471, 0.8601]. Cap hits: learned 2/3 (best epochs 37,27,40), random 2/3 (40,40,19), identity 3/3 (40,40,40). Full table: `results/roadmap/final/continuation2/s4b_hard/summary.md`.
+
+### Task C: hygiene
+
+The branch audit checked `origin/roadmap-continuation-final` (the pushed branch at the time) without changing remote refs or repository visibility. Full file list is in `results/thesis_export_c2/branch_hygiene_audit.md`.

@@ -1,0 +1,13 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S1b,oracle_iterated_zero_ssm,1,1.0281621211880296,1.0196547053993117,1.036681500119122,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_iterated_zero_ssm,2,1.0326598380899277,1.0255626715614963,1.040312590581685,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_iterated_zero_ssm,3,1.0332792180960833,1.0253126176424512,1.0412670197791583,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_iterated_zero_ssm,4,1.028757393222897,1.0210843066210844,1.036545483027966,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_iterated_zero_ssm,5,1.0302878888254108,1.0218297531764313,1.0377822143358324,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_iterated_zero_ssm,6,1.028698272501748,1.0216214550615677,1.036214305941177,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,1,1.030727909881437,1.0229309435384366,1.0385076432920637,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,2,1.0367608798635999,1.0298652697172161,1.044146896746493,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,3,1.0384729775765624,1.0309991860093137,1.0458046075520768,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,4,1.040223938412369,1.033538745370844,1.0469795324003976,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,5,1.0438789131444688,1.0363035151896152,1.0512544001312365,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.
+S1b,oracle_reachability_zero_ssm,6,1.0422405128938985,1.035286392489824,1.0496107286811118,NO GAIN,Zero-initialized SSM residual on masked VAR backbone.

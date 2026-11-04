@@ -1,0 +1,35 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S5b,identity_online,"post[0,200) gate",0.02173550805216655,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,dense_online,"post[0,200) gate",0.02140116656742369,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_frozen,"post[0,200) gate",0.024767676271187762,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_det_on,"post[0,200) gate",0.02227628212969284,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_fast,"post[0,200) gate",0.02248509601402717,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,oracle_online,"post[0,200) gate",0.019553125889603205,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,identity_online,1,0.0007495879618606233,0.0005696606107618823,0.0009528161150490635,GATE FAIL,"learned_fast minus comparator; post[0,200) gate."
+S5b,dense_online,1,0.001083929446603483,0.0008455721291170153,0.0013343816186039486,GATE FAIL,"learned_fast minus comparator; post[0,200) gate."
+S5b,learned_frozen,1,-0.0022825802571605908,-0.002592895940253704,-0.001969214881110626,GATE FAIL,"learned_fast minus comparator; post[0,200) gate."
+S5b,learned_det_on,1,0.00020881388433432874,0.00016945344952982812,0.00024866546936100337,GATE FAIL,"learned_fast minus comparator; post[0,200) gate."
+S5b,oracle_online,1,0.00293197012442397,0.0026414372032066845,0.0032280219319509354,GATE FAIL,"learned_fast minus comparator; post[0,200) gate."
+S5b,identity_online,"post[200,495) descriptive",0.021737808215821233,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,dense_online,"post[200,495) descriptive",0.01890475200607552,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_frozen,"post[200,495) descriptive",0.02507143843596759,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_det_on,"post[200,495) descriptive",0.020798298254869563,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_fast,"post[200,495) descriptive",0.020787850314288238,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,oracle_online,"post[200,495) descriptive",0.017570180455630507,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,identity_online,1,-0.0009499579015329974,-0.0010818971765726168,-0.0008257797265808123,GATE FAIL,"learned_fast minus comparator; post[200,495) descriptive."
+S5b,dense_online,1,0.0018830983082127183,0.0015676791797379574,0.002212488191161505,GATE FAIL,"learned_fast minus comparator; post[200,495) descriptive."
+S5b,learned_frozen,1,-0.004283588121679354,-0.004591090595905766,-0.003984122559141781,GATE FAIL,"learned_fast minus comparator; post[200,495) descriptive."
+S5b,learned_det_on,1,-1.044794058132556e-05,-3.547291487480316e-05,1.3642637472794384e-05,GATE FAIL,"learned_fast minus comparator; post[200,495) descriptive."
+S5b,oracle_online,1,0.0032176698586577285,0.0028692915045710862,0.00356371182508669,GATE FAIL,"learned_fast minus comparator; post[200,495) descriptive."
+S5b,identity_online,"pre-switch [0,471) descriptive",0.0175698291183013,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,dense_online,"pre-switch [0,471) descriptive",0.015613900649719537,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_frozen,"pre-switch [0,471) descriptive",0.014996807529707687,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_det_on,"pre-switch [0,471) descriptive",0.015116798039533984,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,learned_fast,"pre-switch [0,471) descriptive",0.01511425843773942,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,oracle_online,"pre-switch [0,471) descriptive",0.01507942720795194,,,GATE FAIL,learned_fast contrast CIs recorded below.
+S5b,identity_online,1,-0.0024555706805618792,-0.0026750688699044584,-0.0022485063025878714,GATE FAIL,"learned_fast minus comparator; pre-switch [0,471) descriptive."
+S5b,dense_online,1,-0.0004996422119801179,-0.0006006700866791438,-0.00040193879435780394,GATE FAIL,"learned_fast minus comparator; pre-switch [0,471) descriptive."
+S5b,learned_frozen,1,0.00011745090803173368,6.958426292852958e-05,0.0001665419757922985,GATE FAIL,"learned_fast minus comparator; pre-switch [0,471) descriptive."
+S5b,learned_det_on,1,-2.5396017945648885e-06,-7.821438122314165e-06,1.3042273338835823e-06,GATE FAIL,"learned_fast minus comparator; pre-switch [0,471) descriptive."
+S5b,oracle_online,1,3.4831229787481156e-05,8.737442248598748e-06,6.328925424612593e-05,GATE FAIL,"learned_fast minus comparator; pre-switch [0,471) descriptive."
+S5b,learned_fast-dense_online,1,0.001083929446603483,0.0008455721291170153,0.0013343816186039486,GATE FAIL,Frozen first-200 post-switch primary gate.

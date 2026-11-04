@@ -1,0 +1,22 @@
+﻿stage,comparison,horizon,estimate,ci95_low,ci95_high,status,note
+S5+S5b pooled,learned_det_on,"post_switch_[0,200)_post_hoc_descriptive",0.01977831245663886,0.019159268371503762,0.020404736936294163,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=200 windows/seed.
+S5+S5b pooled,dense_online,"post_switch_[0,200)_post_hoc_descriptive",0.019282347070324855,0.018723700300029303,0.01987352521721768,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=200 windows/seed.
+S5+S5b pooled,identity_online,"post_switch_[0,200)_post_hoc_descriptive",0.019244192345853662,0.0186481889022279,0.019817675020355818,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=200 windows/seed.
+S5+S5b pooled,oracle_online,"post_switch_[0,200)_post_hoc_descriptive",0.017564899112825515,0.017044908119294513,0.018099548075548956,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=200 windows/seed.
+S5+S5b pooled,dense_online,1,0.0004959653863140075,0.00036861809558031463,0.0006330011147768031,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[0,200)_post_hoc_descriptive."
+S5+S5b pooled,identity_online,1,0.0005341201107852016,0.000425620199711558,0.0006528421752635038,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[0,200)_post_hoc_descriptive."
+S5+S5b pooled,oracle_online,1,0.002213413343813348,0.002041017789707255,0.0023847807051861317,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[0,200)_post_hoc_descriptive."
+S5+S5b pooled,learned_det_on,"post_switch_[200,495)_post_hoc_descriptive",0.01854324272602907,0.018072965491702675,0.019001385885442073,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=295 windows/seed.
+S5+S5b pooled,dense_online,"post_switch_[200,495)_post_hoc_descriptive",0.017152548021621118,0.016777885277779403,0.01755914482800915,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=295 windows/seed.
+S5+S5b pooled,identity_online,"post_switch_[200,495)_post_hoc_descriptive",0.019146367210268682,0.018663520683690978,0.019645329541382362,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=295 windows/seed.
+S5+S5b pooled,oracle_online,"post_switch_[200,495)_post_hoc_descriptive",0.016101262235236592,0.01574842287439805,0.01646219148137327,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=295 windows/seed.
+S5+S5b pooled,dense_online,1,0.0013906947044079522,0.0012052745243912965,0.0015742877543302733,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[200,495)_post_hoc_descriptive."
+S5+S5b pooled,identity_online,1,-0.0006031244842396087,-0.0006744224752691146,-0.0005349725985992973,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[200,495)_post_hoc_descriptive."
+S5+S5b pooled,oracle_online,1,0.0024419804907924803,0.0022460810013104227,0.002648438681194909,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; post_switch_[200,495)_post_hoc_descriptive."
+S5+S5b pooled,learned_det_on,"pre_switch_[0,471)_post_hoc_descriptive",0.015326411057176612,0.01509359269300275,0.015564465974834903,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=471 windows/seed.
+S5+S5b pooled,dense_online,"pre_switch_[0,471)_post_hoc_descriptive",0.015899429003350004,0.015658836701870717,0.01616219380097232,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=471 windows/seed.
+S5+S5b pooled,identity_online,"pre_switch_[0,471)_post_hoc_descriptive",0.018057124693711568,0.017723250273046415,0.018409348196997282,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=471 windows/seed.
+S5+S5b pooled,oracle_online,"pre_switch_[0,471)_post_hoc_descriptive",0.015307717615887964,0.015065951596309732,0.015539441589119492,"POST HOC, DESCRIPTIVE",10 held-out seeds; n=471 windows/seed.
+S5+S5b pooled,dense_online,1,-0.0005730179461733934,-0.0006457759082894985,-0.0005068153789919798,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; pre_switch_[0,471)_post_hoc_descriptive."
+S5+S5b pooled,identity_online,1,-0.0027307136365349594,-0.002896923974735428,-0.0025721129242022907,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; pre_switch_[0,471)_post_hoc_descriptive."
+S5+S5b pooled,oracle_online,1,1.8693441288645737e-05,-1.7785608707043428e-06,3.9952566360144214e-05,"POST HOC, DESCRIPTIVE","learned_det_on minus comparator; pre_switch_[0,471)_post_hoc_descriptive."
