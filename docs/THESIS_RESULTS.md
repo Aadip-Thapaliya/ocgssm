@@ -79,15 +79,18 @@ Dense-vs-identity post-switch ordering reverses between the individual campaigns
 | On stationary held-out D20, learned beats dense, random, and identity | SUPPORTED (S4b; corrected stationary slice design) | S4b passes all four frozen primary conditions; learned/dense H1 0.9857 [0.9841, 0.9874] |
 | Stationary D20_T600 learned beats dense by more than the S4b reference | SUPPORTED (S4b-hard) | learned/dense 0.9735 [0.9715, 0.9754], point ratio <0.9857; original mixed-regime S4-hard is compromised |
 | The learned graph stays within 5% of oracle on held-out data | NOT SUPPORTED | S4 learned/oracle H1 1.093, H2 1.054 |
-| The graph benefit grows with data scarcity | SUPPORTED on dev; stationary D20_T600 held-out supports a modest gain; original S4-hard is compromised | S2d trend 0.971 to 0.984; S4b-hard learned/dense 0.9735 [0.9715, 0.9754]; original S4-hard mixed-regime result is not valid stationary evidence |
+| The graph benefit grows with data scarcity | SUPPORTED (development and stationary D20_T600 only) | S2d trend 0.971 to 0.984; S4b-hard learned/dense 0.9735 [0.9715, 0.9754]; original S4-hard mixed-regime result is not valid stationary evidence |
 | The OCG-SSM matches a direct VAR | NOT SUPPORTED | learned/var_direct 1.035 (S2), 1.045 (S4); even oracle is about 3% above DirectVAR (S1) |
 | Online adaptation with the detector beats the frozen model after a switch | SUPPORTED | S5 det_on - frozen CI < 0 on 5 held-out seeds |
 | Online adaptation with the learned graph beats dense online after a switch | NOT SUPPORTED (F3) | det_on - dense_online +0.000117 [0.000026, 0.000211]; identity_online is better still |
 | EMA reset plus replay-buffer graph updates let learned_fast beat dense_online | NOT SUPPORTED (S5b) | learned_fast - dense_online +0.001084 [+0.000846, +0.001334] over the frozen first-200 gate |
 | EMA reset plus replay improves graph tracking over learned_det_on | NOT SUPPORTED | S5b top-|E| F1 over first 200 post-switch windows is lower for learned_fast (0.197-0.360) than learned_det_on (0.269-0.439) across the five seeds |
-| The detector finds the switch quickly without false alarms | QUALIFIED (synthetic) | For learned_det_on across S5+S5b, 2 false alarms in 2 of 10 runs. In S5b learned_fast there was one 63-step delay; fast had additional false alarms in 2/5 runs. S5's earlier 5/5, zero-false-alarm result does not generalize to all continuation runs. |
+| The detector finds the switch quickly without false alarms | NOT SUPPORTED (qualified) | For learned_det_on across S5+S5b, 2 false alarms in 2 of 10 runs. In S5b learned_fast there was one 63-step delay; fast had additional false alarms in 2/5 runs. S5's earlier 5/5, zero-false-alarm result does not generalize to all continuation runs. |
 | The learned graph tracks the post-switch graph | NOT SUPPORTED | post-switch top-|E| F1 0.23-0.37 over the first 200 windows |
-| The learned graph helps on real data versus dense | PARTIAL: SUPPORTED at H24 (ETTh1, ETTh2); NOT SUPPORTED at ETTh1 H96; INCONCLUSIVE at ETTh2 H96 | S6 |
+| The learned graph helps on ETTh1 versus dense at H24 | SUPPORTED | S6 ETTh1 H24 learned/dense 0.9731 [0.9622, 0.9834] |
+| The learned graph helps on ETTh2 versus dense at H24 | SUPPORTED | S6 learned/dense MSE 0.9907 [0.9839, 0.9973] |
+| The learned graph helps on ETTh1 versus dense at H96 | NOT SUPPORTED | S6 learned/dense MSE 0.9967 [0.9898, 1.0034] |
+| The learned graph helps on ETTh2 versus dense at H96 | INCONCLUSIVE | S6 ETTh2 H96 incomplete; not run in this continuation |
 | OCG-SSM is competitive with strong real-data baselines | NOT SUPPORTED | DLinear better by 15-73% MSE in every S6 case |
 | Learned real-data graphs are stable or causal | INCONCLUSIVE | No ground truth; top-10 Jaccard across seeds 0.25-0.43 (ETTh1), 0-0.18 (ETTh2) |
 | Learned_det_on beats dense online pooled across S5+S5b | NOT SUPPORTED, post hoc descriptive | pooled first-200 det_on - dense +0.000496 [+0.000369, +0.000633]; later [200,495) +0.001391 [+0.001205, +0.001574] |
