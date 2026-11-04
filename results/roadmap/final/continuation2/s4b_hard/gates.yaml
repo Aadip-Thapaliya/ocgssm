@@ -1,0 +1,17 @@
+stage: S4b-hard stationary held-out D20_T600 (Continuation 2 Task B; one attempt, no retry)
+mission_record: docs/MISSION_CONTINUATION_2.md
+frozen_before_heldout: true
+purpose: stationary counterpart to S4-hard; original S4-hard remains secondary evidence on its mixed-regime test slice and is not replaced.
+pairs: [[149, 2609], [151, 2713], [157, 2819]]
+data: D20 K2 SVAR, steps 4000, NO switch (switch_at = n_steps = 4000), sparsity 0.1, noise 0.1, cross scale 1.0; train raw [1800,2400) (600 points), tune [2400,2666), test [3200,4000) (771 windows).
+training: same S4b policy: iterated head, lr 0.001, batch 32, epoch_cap 40, patience 5, best tune checkpoint, graph_lr 0.01, sparsity_weight 0.001, threads 1.
+variants: [identity, dense, random, learned, oracle, var_direct]
+primary_gate:
+  - learned/dense paired 95% CI upper < 1 at H1
+  - learned/dense H1 point ratio < 0.9857 (S4b learned/dense point ratio)
+  - learned/identity paired 95% CI upper < 1 at H1
+  - learned/random paired 95% CI upper < 1 at H1
+statistics: equal-seed mean MSE ratio; paired circular block bootstrap, 12-window blocks, 2000 resamples; same bootstrap seeds as S4b (700000+h).
+report: cap hits, best epochs, per-variant runtime.
+on_failure: report failure; no retry.
+budget: <=45 minutes wall, one attempt.
