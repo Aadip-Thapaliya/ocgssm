@@ -1,0 +1,405 @@
+{
+  "status": "UNAVAILABLE: saved records contain no pre-update EMA graph snapshots; only aggregate graph_timeline metrics were retained. No model was rerun and no topology proxy substituted.",
+  "checks": [
+    {
+      "stage": "S5",
+      "pair": [
+        79,
+        1301
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\s5\\heldout\\data79_model1301\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5",
+      "pair": [
+        83,
+        1409
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\s5\\heldout\\data83_model1409\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5",
+      "pair": [
+        89,
+        1511
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\s5\\heldout\\data89_model1511\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5",
+      "pair": [
+        97,
+        1613
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\s5\\heldout\\data97_model1613\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5",
+      "pair": [
+        101,
+        1709
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\s5\\heldout\\data101_model1709\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        113,
+        2111
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data113_model2111\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        113,
+        2111
+      ],
+      "variant": "learned_fast",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data113_model2111\\learned_fast.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "fast",
+        "fast_events",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        127,
+        2203
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data127_model2203\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        127,
+        2203
+      ],
+      "variant": "learned_fast",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data127_model2203\\learned_fast.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "fast",
+        "fast_events",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        131,
+        2309
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data131_model2309\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        131,
+        2309
+      ],
+      "variant": "learned_fast",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data131_model2309\\learned_fast.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "fast",
+        "fast_events",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        137,
+        2411
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data137_model2411\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        137,
+        2411
+      ],
+      "variant": "learned_fast",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data137_model2411\\learned_fast.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "fast",
+        "fast_events",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        139,
+        2503
+      ],
+      "variant": "learned_det_on",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data139_model2503\\learned_det_on.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    },
+    {
+      "stage": "S5b",
+      "pair": [
+        139,
+        2503
+      ],
+      "variant": "learned_fast",
+      "path": "results\\roadmap\\final\\continuation\\s5b\\heldout\\data139_model2503\\learned_fast.json",
+      "top_level_keys": [
+        "calibration",
+        "config",
+        "detections",
+        "elapsed_seconds",
+        "errors",
+        "fast",
+        "fast_events",
+        "graph_timeline",
+        "pair",
+        "variant"
+      ],
+      "graph_timeline_keys": [
+        "auroc",
+        "f1",
+        "f1_topk",
+        "shd"
+      ],
+      "saved_pre_update_ema_snapshots": false
+    }
+  ]
+}
