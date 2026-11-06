@@ -1,6 +1,0 @@
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\identity.json", "s": 86.3, "epochs": 40, "best": 40, "rss_mb": 417}
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\dense.json", "s": 38.2, "epochs": 18, "best": 13, "rss_mb": 419}
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\random.json", "s": 76.1, "epochs": 40, "best": 40, "rss_mb": 420}
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\learned.json", "s": 66.6, "epochs": 32, "best": 27, "rss_mb": 420}
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\oracle.json", "s": 78.2, "epochs": 39, "best": 34, "rss_mb": 422}
-{"run": "results\\roadmap\\final\\continuation2\\s4b_hard\\default\\data151_model2713\\var_direct.json", "s": 0.4, "epochs": 9, "best": 4, "rss_mb": 422}

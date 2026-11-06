@@ -1,0 +1,109 @@
+protocol_version: 1
+purpose: Compare graph masks under equal offline pretraining followed by matched delayed-label online adaptation.
+device: cpu
+cpu_threads: 1
+data:
+  generator: generate_svar
+  steps: 4000
+  variables: 20
+  lags: 2
+  sparsity: 0.1
+  noise_scale: 0.1
+  cross_variable_scale: 1.0
+  switch_at: 3600
+  blend_steps: 0
+  input_length: 24
+  horizon: 6
+  chronological_raw_splits:
+    train: [0, 2399]
+    validation: [2400, 3199]
+    test: [3200, 3999]
+  validation_subsplits_for_development:
+    rate_selection_and_headroom_checkpoint: [2400, 2665]
+    hard_mask_threshold_calibration: [2666, 2932]
+    untouched_headroom_gate: [2933, 3199]
+  expected_windows:
+    train: 2371
+    validation: 771
+    each_validation_subsplit: [237, 238, 238]
+    test: 771
+  test_graph_timestamps: [3223, 3993]
+  test_pre_switch_graph_windows: 377
+  test_post_switch_graph_windows: 394
+seeds:
+  development_pair: {data: 31, model: 301}
+  held_out_pairs:
+    - {data: 37, model: 401}
+    - {data: 43, model: 503}
+    - {data: 47, model: 607}
+  commitment: These four pairs are fixed before any headroom or held-out evaluation; exclude every seed pair appearing in the previous graph diagnostics or graph-utilization campaign ledgers.
+variants:
+  base_pretrained:
+    - identity
+    - dlinear
+    - var_direct
+    - dense
+    - random
+    - learned_soft
+    - oracle
+  additional_ablation:
+    - learned_hard_thresholded
+training:
+  offline_pretraining:
+    max_epochs: 50
+    batch_size: 32
+    validation_checkpoint: Lowest validation MSE; restore model and graph-optimizer state from the selected epoch.
+    graph_objective: Learned graph VAR structural loss is fit on training windows only.
+  learning_rate_selection: >
+    Select a single shared forecast learning rate from [0.0003, 0.001, 0.003]
+    using train-only fitting and validation loss on the development pair. Select
+    the learned graph optimizer learning rate from [0.001, 0.01, 0.03] using
+    train-only fitting and validation graph AUROC on that same development pair.
+    Forecast rate screening uses 10 epochs per candidate, lowest MSE on raw
+    validation segment 2400-2665; choose the rate minimizing equal-weight mean
+    of each candidate model's validation MSE normalized by that model's best
+    candidate MSE. Graph rate screening uses 10 structural epochs per candidate
+    and selects highest validation AUROC on that segment, ties selecting the
+    lower rate. Use raw validation segment 2933-3199 for the headroom gate,
+    with its checkpoint selected only on segment 2400-2665. Freeze both rates
+    before held-out runs; do not use test results to select either.
+  online_adaptation:
+    schedule: Identical one-pass prequential delayed-label schedule on all 771 test windows after validation-selected offline checkpoint restoration.
+    forecast_learning_rate: Use the frozen development-selected shared rate; reset the forecast Adam optimizer at the offline-to-online boundary for every variant.
+    graph_learning_rate: Use the frozen development-selected rate and restore the graph Adam state paired with the selected learned checkpoint.
+    detector: Disabled (no score-triggered learning-rate boosts or detector evaluation).
+    hard_mask: Select one threshold on development validation snapshots in raw segment 2666-2932 by maximum pooled F1 (highest threshold on ties); hold fixed and convert learned EMA probabilities to binary masks for forecast use only. Continue identical learned graph structural updates online, report raw probabilities, and retain the soft learned variant.
+profile:
+  scope: Development pair only; representative one-epoch pretraining and 64-window train-only prequential timing.
+  estimate_method: Scale measured per-epoch and per-window costs to the frozen protocol; record uncertainty/memory and decide campaign feasibility before held-out evaluation.
+validation_headroom_gate:
+  scope: Development pair only; DirectVAR versus identity evaluated on validation raw timestamps after train-only fitting and validation checkpoint selection.
+  criterion: At each H1/H2, DirectVAR/identity mean MSE ratio <= 0.95 and upper endpoint of paired circular moving-block 95% percentile bootstrap interval < 1.0.
+  blocks: 12 adjacent windows; 2000 resamples; paired windowwise errors.
+  aggregation: Single development seed pair; point ratio gate and interval reported separately.
+held_out_gates:
+  scope: Scale 1.0 only, using the three frozen held-out pairs after validation gate and protocol freeze.
+  ratio_point_gates:
+    oracle_divided_by_var_direct_equal_seed_mean_ratio: <= 1.05 at each H1/H2.
+    learned_soft_divided_by_oracle_equal_seed_mean_ratio: <= 1.05 at each H1/H2.
+    learned_hard_divided_by_oracle_equal_seed_mean_ratio: <= 1.05 at each H1/H2.
+  paired_controls:
+    criterion: Upper endpoint of equal-seed paired circular moving-block 95% interval for learned-soft minus dense and random MSE is < 0 at each H1/H2. Report hard-thresholded comparisons too, but do not change the primary criterion.
+statistics:
+  report_horizons: [1, 2, 3, 4, 5, 6]
+  primary_gate_horizons: [1, 2]
+  seed_reporting: Preserve per-seed per-horizon MSE and ratios; aggregate three seed estimates equally and never treat pooled windows as IID seeds.
+  paired_block_bootstrap:
+    type: Circular moving-block percentile bootstrap.
+    block_length_windows: 12
+    resamples: 2000
+    confidence_level: 0.95
+    aggregation: Resample paired window errors within each seed, compute seed statistics, and average equally.
+graph_quality:
+  report: Validation post-pretraining graph quality and pre-update streaming graph quality before/after the test switch, by seed.
+  threshold_for_quality: Threshold selected only on development validation; preserve raw probabilities for AUROC/AP.
+prohibitions:
+  - Do not start the full held-out campaign unless the D20 development headroom gate passes.
+  - Do not shorten training or change data scale, splits, seed pairs, or statistics after held-out evaluation.
+  - Do not test any synthetic knob variant because dense is hypothesized to underperform.
+  - No detector, real-data, Colab, GPU, paid compute, commits, or pull requests.
