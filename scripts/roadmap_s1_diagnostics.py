@@ -1,4 +1,4 @@
-"""User-directed S1 diagnostics (development seeds, validation only)."""
+"""S1 diagnostics (development seeds, validation only)."""
 
 import json
 import statistics

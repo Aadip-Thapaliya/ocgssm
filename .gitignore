@@ -259,3 +259,12 @@ results/roadmap/**
 !results/roadmap/*/*/*/*/*.png
 !results/roadmap/*/*/*/persistence.json
 !results/roadmap/*/*/*/*/persistence.json
+
+# Local-only folders and data
+logs/
+_archive/
+data/*.csv
+__pycache__/
+.venv/
+*.pyc
+.pytest_cache/

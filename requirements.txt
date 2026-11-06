@@ -1,10 +1,10 @@
-torch
-numpy
-scipy
-pandas
-scikit-learn
-pyyaml
-matplotlib
-tqdm
-pytest
-psutil; sys_platform == "win32"
+torch==2.15.0
+numpy==2.5.4
+scipy==1.18.1
+pandas==3.1.0
+scikit-learn==1.9.1
+PyYAML==6.0.3
+matplotlib==3.11.2
+tqdm==4.70.1
+pytest==9.2.0
+psutil==7.2.2; sys_platform == "win32"
