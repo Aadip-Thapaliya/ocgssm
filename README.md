@@ -50,13 +50,13 @@ data was built, and negative results are reported as they came out.
 ## Highlights
 
 - **Learned graph helps on stationary data.** On held-out stationary
-  synthetic data the learned graph beat dense, random and identity graphs,
-  with 95% confidence intervals entirely below a ratio of 1.
+  synthetic data the learned graph beat dense, random and identity graphs at
+  horizon 1, with 95% confidence intervals entirely below a ratio of 1.
 - **No benefit after a graph switch.** After an abrupt change, online dense
   adaptation was as good as or better than the learned graph.
-- **DLinear wins on real data.** On ETTh1 and ETTh2 the learned graph was at
-  least as good as dense, but DLinear had 15-73% lower MSE in every
-  evaluated case.
+- **DLinear wins on real data.** On ETTh1 and ETTh2 the learned graph's
+  point estimate was at least as good as dense, but OCG-SSM's MSE was 15-73%
+  higher than DLinear's in every evaluated case.
 - **Pre-registered gates.** Each stage's pass/fail conditions were committed
   to git before its held-out data was built, and the code checks this.
 - **Fully reproducible tables.** One command rebuilds every thesis table and
@@ -357,13 +357,19 @@ statistics come from the training split only.
 All numbers below are copied from the stage summaries; the full per-horizon
 tables are in `results/thesis_export_c2/`. H1 means horizon 1.
 
+The `status` column in those CSVs is the outcome of the whole stage, repeated
+on every row. It is not a verdict on each row. For example, `S1.csv` marks
+`oracle_lag` at H2 (1.1294) as PASS because the stage passed with the
+selected `oracle_iterated` head, not because that row meets the gate. Each
+stage's gate conditions are in its `gates.yaml` or `protocol.yaml`.
+
 ### Stage overview
 
 | Stage | Question | Outcome |
 |---|---|---|
 | S1 | Is the oracle-graph model close to DirectVAR on development data? | PASS (oracle / DirectVAR H1 1.029) |
 | S1b | Does an SSM residual on a masked VAR backbone help? | no gain |
-| S3 | Has the learned graph converged by the epoch cap? | PASS (0/3 cap hits; < 0.05% gain after epoch 20) |
+| S3 | Has the learned graph converged by the epoch cap? | PASS (0/3 cap hits; 0.02-0.03% gain after epoch 20) |
 | S2 | Development: is learned close to oracle and better than dense/random? | PASS |
 | S2d | Does the graph benefit grow as training data shrinks? | yes on development data; D20 with 600 training steps chosen for S4-hard |
 | S4 | Held-out, test slice containing a graph switch | FAIL (0 of 4 gate conditions) |
@@ -382,12 +388,16 @@ tables are in `results/thesis_export_c2/`. H1 means horizon 1.
 | S2 learned / oracle | 1.0059 [1.0036, 1.0083] |
 | S2 learned / dense | 0.9839 [0.9811, 0.9868] |
 | S2 learned / random | 0.8360 [0.8232, 0.8497] |
-| S2 learned / identity | 0.8243 |
+| S2 learned / identity | 0.8243 [0.8107, 0.8384] |
+| S2 learned / DirectVAR | 1.0349 [1.0269, 1.0428] |
 | S2d learned / dense, D20 with 600 training steps | 0.9712 [0.9680, 0.9743] |
 
-On development data the learned graph is within 1% of the oracle graph and
-beats every other graph mode. The SSM itself trails a plain DirectVAR by
-about 3% even with the true graph.
+"Learned" in S2 is the soft-mask variant selected by the frozen protocol. A
+hard-thresholded variant was also run and did much worse (learned_hard /
+dense 1.2007 [1.1811, 1.2203]). On development data the soft learned graph
+is within 1% of the oracle graph and beats the dense, random and identity
+graphs. The SSM trails a plain DirectVAR by about 3% even with the true
+graph.
 
 ### Stationary synthetic data: supported
 
@@ -414,7 +424,7 @@ the S2d trend. The gain fades at longer horizons.
   +0.000117 [+0.000026, +0.000211], so dense adapts better.
 - **S5b** (EMA reset and replay). learned_fast minus dense online:
   +0.001084 [+0.000846, +0.001334]. The gate failed and was not retried.
-- **Pooled S5 + S5b** (10 seeds, descriptive). Learned with detector minus
+- **Pooled S5 + S5b** (10 seeds; post hoc and descriptive, not a gate). Learned with detector minus
   dense online is +0.000496 [+0.000369, +0.000633] in the first 200 windows
   and +0.001391 [+0.001205, +0.001574] in windows 200-495. Before the
   switch, learned beats dense: -0.000573 [-0.000646, -0.000507].
@@ -430,9 +440,9 @@ the S2d trend. The gain fades at longer horizons.
 | ETTh2, H24 | 0.9907 [0.9839, 0.9973] | 0.9828 [0.9761, 0.9893] | 1.153 |
 | ETTh2, H96 | incomplete (2 of 3 seeds) | incomplete | incomplete |
 
-The learned graph beats dense at H24 on both datasets, with no
-interval-supported gain at H96. DLinear has lower error than OCG-SSM in every
-evaluated case. Learned real-data graphs are not stable across seeds (top-10
+The learned graph beats dense at H24 on both datasets. On ETTh1 H96 the
+interval includes 1, so there is no supported gain; ETTh2 H96 was not
+completed. DLinear has lower error than OCG-SSM in every evaluated case. Learned real-data graphs are not stable across seeds (top-10
 edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not causal claims.
 
 ### Scope
@@ -446,15 +456,15 @@ edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not causal claims.
 
 | Claim | Status |
 |---|---|
-| The learned graph recovers the true lagged graph on stationary synthetic data | supported, synthetic only (D20 AUROC 0.9999, F1 0.986) |
+| The learned graph recovers the true lagged graph on stationary synthetic data | supported, synthetic only (D20 AUROC 0.9999, F1 0.986 in an early development diagnostic; pre-switch top-edge F1 about 1.0 in S5) |
 | On stationary held-out data, learned beats dense, random and identity | supported (S4b, S4b-hard) |
 | The graph benefit grows as training data shrinks | supported on development and stationary D20 data |
-| Learned stays within 5% of oracle on held-out data | not supported (S4 learned / oracle H1 1.093) |
+| Learned stays within 5% of oracle on held-out data | mixed: not supported on the S4 slice containing a switch (1.093); met on stationary S4b (1.0063) and by point estimate on S4b-hard (1.0466 [1.0422, 1.0512]) |
 | OCG-SSM matches a direct VAR | not supported (about 3-5% behind) |
 | Online adaptation beats a frozen model after a switch | supported (S5) |
 | Online learned graph beats online dense after a switch | not supported (S5, S5b, pooled) |
-| The learned graph tracks the new graph after a switch | not supported (top-edge F1 0.23-0.37 in the first 200 windows) |
-| The detector finds switches without false alarms | not supported (false alarms in 2 of 10 runs) |
+| The learned graph tracks the new graph after a switch | not supported (S5 top-edge F1 0.23-0.37 and S5b 0.27-0.44 over the first 200 post-switch windows, against about 1.0 before the switch) |
+| The detector finds switches without false alarms | not supported (S5: no false alarms in 5 runs; S5b: one false alarm in each of 2 of 5 runs) |
 | The learned graph helps against dense on ETT at H24 | supported (ETTh1, ETTh2) |
 | The learned graph helps against dense on ETT at H96 | not supported (ETTh1); inconclusive (ETTh2) |
 | OCG-SSM is competitive with strong real-data baselines | not supported (DLinear better) |
@@ -467,7 +477,8 @@ edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not causal claims.
 - **Forecaster strength.** The SSM is 3-5% behind a plain DirectVAR on
   synthetic data, and DLinear is clearly better on ETT.
 - **Noise floor.** Synthetic innovations have variance 0.01, so the
-  irreducible H1 MSE is 0.01. The oracle-graph SSM is about 6.6% above that.
+  irreducible H1 MSE is 0.01. On the development slice the oracle-graph SSM
+  is about 6.6% above that (H1 MSE 0.01066).
 - **Training caps.** Many runs hit their epoch cap under the frozen training
   policy, so some models may be under-trained.
 - **Few seeds.** Three seeds for S2, S4 and S6, five for S5 and S5b.
