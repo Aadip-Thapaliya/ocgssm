@@ -6,7 +6,7 @@
 ![PyTorch](https://img.shields.io/badge/pytorch-2.15-orange)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-OCG-SSM is a multivariate time-series forecaster developed for a master's
+OCG-SSM is a multivariate time-series forecaster developed for a bachelor's
 thesis at the University of Europe for Applied Sciences. It learns a sparse,
 lagged dependency graph between the input variables and uses that graph to
 decide which variables may influence each other inside a state-space model
