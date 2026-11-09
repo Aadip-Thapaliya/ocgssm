@@ -54,9 +54,10 @@ data was built, and negative results are reported as they came out.
   horizon 1, with 95% confidence intervals entirely below a ratio of 1.
 - **No benefit after a graph switch.** After an abrupt change, online dense
   adaptation was as good as or better than the learned graph.
-- **DLinear wins on real data.** On ETTh1 and ETTh2 the learned graph's
-  point estimate was at least as good as dense, but OCG-SSM's MSE was 15-73%
-  higher than DLinear's in every evaluated case.
+- **DLinear is mostly stronger on real data.** On ETTh1 and ETTh2 the learned
+  graph beat dense, with an interval below 1, in 3 of 4 cases. OCG-SSM's MSE
+  was 15-73% higher than DLinear's in 3 of 4 cases. On ETTh2 H96 the two
+  were statistically tied.
 - **Pre-registered gates.** Each stage's pass/fail conditions were committed
   to git before its held-out data was built, and the code checks this.
 - **Fully reproducible tables.** One command rebuilds every thesis table and
@@ -377,7 +378,7 @@ stage's gate conditions are in its `gates.yaml` or `protocol.yaml`.
 | S4b-hard | Held-out, stationary, D20 with 600 training steps | PASS (4 of 4) |
 | S5 | Online adaptation after an abrupt switch | FAIL against dense online |
 | S5b | EMA reset plus replay-buffer graph updates | FAIL against dense online, not retried |
-| S6 | Real data (ETTh1, ETTh2) | learned at least matches dense; DLinear better |
+| S6 | Real data (ETTh1, ETTh2) | learned beats dense in 3 of 4 cases; DLinear better in 3 of 4, tied in 1 |
 | S6b | Five-seed real-data follow-up | not run |
 
 ### Development stages (S1-S3)
@@ -431,43 +432,74 @@ the S2d trend. The gain fades at longer horizons.
 
 ![Pooled S5 and S5b MSE before and after the switch](results/thesis_export_c2/pooled_switch_mse.png)
 
-### Real data: DLinear is stronger
+### Real data: DLinear is mostly stronger
 
 | Case | learned / dense | learned / identity | learned / DLinear |
 |---|---|---|---|
-| ETTh1, H24 | 0.9731 [0.9622, 0.9834] | 0.9479 [0.9305, 0.9668] | 1.733 |
-| ETTh1, H96 | 0.9967 [0.9898, 1.0034] | 0.9753 [0.9667, 0.9845] | 1.553 |
-| ETTh2, H24 | 0.9907 [0.9839, 0.9973] | 0.9828 [0.9761, 0.9893] | 1.153 |
-| ETTh2, H96 | incomplete (2 of 3 seeds) | incomplete | incomplete |
+| ETTh1, H24 | 0.9731 [0.9622, 0.9834] | 0.9479 [0.9305, 0.9668] | 1.733 [1.624, 1.856] |
+| ETTh1, H96 | 0.9967 [0.9898, 1.0034] | 0.9753 [0.9667, 0.9845] | 1.553 [1.453, 1.652] |
+| ETTh2, H24 | 0.9907 [0.9839, 0.9973] | 0.9828 [0.9761, 0.9893] | 1.153 [1.114, 1.197] |
+| ETTh2, H96 | 0.9824 [0.9726, 0.9922] | 1.0250 [1.0159, 1.0333] | 0.9836 [0.9418, 1.0293] |
 
-The learned graph beats dense at H24 on both datasets. On ETTh1 H96 the
-interval includes 1, so there is no supported gain; ETTh2 H96 was not
-completed. DLinear has lower error than OCG-SSM in every evaluated case. Learned real-data graphs are not stable across seeds (top-10
-edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not causal claims.
+- **Learned vs dense.** The learned graph beats dense with an interval below
+  1 on ETTh1 H24, ETTh2 H24 and ETTh2 H96. On ETTh1 H96 the interval
+  includes 1, so there is no supported gain.
+- **Learned vs identity.** On ETTh2 H96 the learned graph is worse than the
+  identity graph (1.0250) and the random graph (1.0103 [1.0039, 1.0168]).
+  There, any cross-variable edges hurt, and dense hurts most
+  (dense / identity 1.0434).
+- **OCG-SSM vs DLinear.** DLinear has lower error in three cases. On ETTh2
+  H96 the MSE interval includes 1, so neither is better; on MAE, OCG-SSM is
+  lower (0.9678 [0.9449, 0.9908]).
+- **Graph stability.** Learned real-data graphs are not stable across seeds
+  (top-10 edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not
+  causal claims.
+
+ETTh2 H96 was first stopped after 2 of 3 seeds when the S6 compute budget ran
+out, and was reported as incomplete. It was completed later with the same
+frozen `gates.yaml`, script and seeds: the two finished seeds were reused
+unchanged and only seed 1201 was trained. The other three S6 cases did not
+change.
 
 ### Scope
 
 - Stationary synthetic data: supported.
 - Learned graph versus dense after a switch: not supported.
-- Real data: DLinear is stronger.
+- Real data: DLinear is stronger (3 of 4 cases; tied on ETTh2 H96).
 - Online adaptation on real data: not tested.
 
 ## Claims and their status
 
-| Claim | Status |
-|---|---|
-| The learned graph recovers the true lagged graph on stationary synthetic data | supported, synthetic only (D20 AUROC 0.9999, F1 0.986 in an early development diagnostic; pre-switch top-edge F1 about 1.0 in S5) |
-| On stationary held-out data, learned beats dense, random and identity | supported (S4b, S4b-hard) |
-| The graph benefit grows as training data shrinks | supported on development and stationary D20 data |
-| Learned stays within 5% of oracle on held-out data | mixed: not supported on the S4 slice containing a switch (1.093); met on stationary S4b (1.0063) and by point estimate on S4b-hard (1.0466 [1.0422, 1.0512]) |
-| OCG-SSM matches a direct VAR | not supported (about 3-5% behind) |
-| Online adaptation beats a frozen model after a switch | supported (S5) |
-| Online learned graph beats online dense after a switch | not supported (S5, S5b, pooled) |
-| The learned graph tracks the new graph after a switch | not supported (S5 top-edge F1 0.23-0.37 and S5b 0.27-0.44 over the first 200 post-switch windows, against about 1.0 before the switch) |
-| The detector finds switches without false alarms | not supported (S5: no false alarms in 5 runs; S5b: one false alarm in each of 2 of 5 runs) |
-| The learned graph helps against dense on ETT at H24 | supported (ETTh1, ETTh2) |
-| The learned graph helps against dense on ETT at H96 | not supported (ETTh1); inconclusive (ETTh2) |
-| OCG-SSM is competitive with strong real-data baselines | not supported (DLinear better) |
+Of the 12 claims tested, **5 are supported**, **2 are partly supported** and
+**5 are not supported**. A claim counts as supported only when its frozen
+gate passed or its 95% interval excludes no effect.
+
+**Stationary synthetic data**
+
+| Claim | Verdict | Evidence |
+|---|---|---|
+| The learned graph recovers the true lagged graph | **Supported** (synthetic only) | Pre-switch top-edge F1 about 1.0 in S5; D20 AUROC 0.9999 and F1 0.986 in an early development diagnostic |
+| On held-out data, learned beats dense, random and identity | **Supported** | S4b and S4b-hard pass all four gate conditions; learned / dense H1 0.9857 and 0.9735, intervals below 1 |
+| The graph benefit grows as training data shrinks | **Supported** | S2d learned / dense 0.9712 with 600 training steps vs 0.9839 with 2400; S4b-hard 0.9735 vs S4b 0.9857 |
+| Learned stays within 5% of oracle on held-out data | **Partly supported** | Met on stationary S4b (1.0063) and by point estimate on S4b-hard (1.0466 [1.0422, 1.0512]); not met on the S4 slice that contains a switch (1.093) |
+| OCG-SSM matches a direct VAR | **Not supported** | learned / DirectVAR 1.035 (S2) and 1.045 (S4) |
+
+**After a graph switch (online)**
+
+| Claim | Verdict | Evidence |
+|---|---|---|
+| Online adaptation beats a frozen model | **Supported** | S5 learned with detector minus frozen -0.001661 [-0.001831, -0.001502] |
+| The online learned graph beats online dense | **Not supported** | S5 +0.000117 [+0.000026, +0.000211]; S5b +0.001084 [+0.000846, +0.001334]; pooled S5 + S5b also positive |
+| The learned graph tracks the new graph | **Not supported** | Top-edge F1 over the first 200 post-switch windows 0.23-0.37 (S5) and 0.27-0.44 (S5b), against about 1.0 before the switch |
+| The detector finds switches without false alarms | **Not supported** | No false alarms in 5 S5 runs, but one each in 2 of 5 S5b runs |
+
+**Real data (ETTh1, ETTh2)**
+
+| Claim | Verdict | Evidence |
+|---|---|---|
+| The learned graph helps against dense at H24 | **Supported** | ETTh1 0.9731 [0.9622, 0.9834]; ETTh2 0.9907 [0.9839, 0.9973] |
+| The learned graph helps against dense at H96 | **Partly supported** | ETTh2 0.9824 [0.9726, 0.9922]; ETTh1 0.9967 [0.9898, 1.0034], interval includes 1 |
+| OCG-SSM is competitive with strong real-data baselines | **Not supported** | OCG-SSM MSE 15-73% higher than DLinear in 3 of 4 cases; tied on ETTh2 H96 (0.9836 [0.9418, 1.0293]) |
 
 ## Limitations
 
@@ -475,14 +507,15 @@ edge Jaccard 0.25-0.43 on ETTh1, 0-0.18 on ETTh2) and are not causal claims.
 - **Synthetic graph identification only.** Graph recovery is shown only on a
   synthetic SVAR. Real-data graphs have no ground truth.
 - **Forecaster strength.** The SSM is 3-5% behind a plain DirectVAR on
-  synthetic data, and DLinear is clearly better on ETT.
+  synthetic data, and DLinear is better on ETT in 3 of 4 cases.
 - **Noise floor.** Synthetic innovations have variance 0.01, so the
   irreducible H1 MSE is 0.01. On the development slice the oracle-graph SSM
   is about 6.6% above that (H1 MSE 0.01066).
 - **Training caps.** Many runs hit their epoch cap under the frozen training
   policy, so some models may be under-trained.
 - **Few seeds.** Three seeds for S2, S4 and S6, five for S5 and S5b.
-- **Incomplete cases.** ETTh2 H96 is incomplete and S6b was not run. Online
+- **Incomplete cases.** S6b was not run. ETTh2 H96 was completed only after
+  the original S6 deadline (see Results). Online
   adaptation on real data and other datasets (Weather, ETTm1) were not
   evaluated.
 - **Timing.** Some recorded `elapsed_seconds` values are inflated by laptop
