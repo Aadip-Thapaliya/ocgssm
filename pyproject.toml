@@ -9,7 +9,7 @@ requires-python = ">=3.10"
 dependencies = [
   "torch", "numpy", "scipy", "pandas",
   "scikit-learn", "pyyaml", "matplotlib", "tqdm",
-  "psutil; sys_platform == 'win32'",
+  "psutil",
 ]
 
 [tool.setuptools.packages.find]
