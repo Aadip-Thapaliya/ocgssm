@@ -1,0 +1,27 @@
+name: Citation
+
+on:
+  push:
+    branches: [main]
+    paths: [CITATION.cff, .github/workflows/citation.yml]
+  pull_request:
+    paths: [CITATION.cff]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate CITATION.cff
+        run: |
+          python -m pip install cffconvert
+          cffconvert --validate

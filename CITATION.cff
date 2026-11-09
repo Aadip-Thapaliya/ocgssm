@@ -14,6 +14,7 @@ authors:
   - family-names: Thapaliya
     given-names: Aadip
     affiliation: "University of Europe for Applied Sciences"
+license: MIT
 repository-code: "https://github.com/Aadip-Thapaliya/ocgssm"
 url: "https://github.com/Aadip-Thapaliya/ocgssm"
 keywords:
